@@ -4,8 +4,6 @@
 
 #include "ns3/core-module.h"
 #include "ns3/mobility-module.h"
-#include "ns3/animation-interface.h"
-#include "ns3/low-resolution-radio-module.h"
 #include "json.hpp"
 #include "ns3/sat-channel.h"
 #include "ns3/sat-net-device.h"

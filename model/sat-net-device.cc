@@ -1,7 +1,6 @@
 #include "sat-channel.h"
 #include "sat-net-device.h"
 #include <ns3/network-module.h>
-#include "ns3/log.h"
 
 namespace ns3 {
 
@@ -27,6 +26,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
 
     SatNetDevice::~SatNetDevice()
     {
+        NS_LOG_FUNCTION (this);
     }
 
     void

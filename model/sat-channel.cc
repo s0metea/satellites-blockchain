@@ -1,7 +1,6 @@
-#include <ns3/log-macros-disabled.h>
-#include <ns3/nstime.h>
 #include "sat-channel.h"
 #include "sat-net-device.h"
+#include <ns3/nstime.h>
 
 namespace ns3 {
 
@@ -13,22 +12,20 @@ namespace ns3 {
         return tid;
     }
 
-    SatChannel::SatChannel() :
+    SatChannel::SatChannel()
+        :
             Channel(),
             m_delay(Seconds(0.)),
             m_nDevices(0) {
-        //NS_LOG_FUNCTION_NOARGS();
+            //NS_LOG_FUNCTION_NOARGS();
     }
 
-    SatChannel::~SatChannel() {}
-
-    uint32_t
-    SatChannel::GetNDevices() {
-        return 0;
+    Ptr<NetDevice> SatChannel::GetDevice(uint32_t i) const {
+        return Ptr<NetDevice>();
     }
 
-    Ptr<NetDevice>
-    SatChannel::GetDevice(uint32_t i) {
-        return Ptr<SatNetDevice>();
-    };
+    uint32_t SatChannel::GetNDevices() const {
+        NS_LOG_FUNCTION_NOARGS ();
+        return m_nDevices;
+    }
 }

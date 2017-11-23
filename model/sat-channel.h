@@ -1,33 +1,52 @@
 #ifndef SAT_CHANNEL_H
 #define SAT_CHANNEL_H
 
-#include <ns3/nstime.h>
+#include "sat-net-device.h"
+#include "ns3/log.h"
 #include "ns3/node.h"
 #include "ns3/channel.h"
+#include <ns3/nstime.h>
 
 namespace ns3 {
 
-class SatChannel: public Channel {
+class SatNetDevice;
+class Packet;
+
+class SatChannel: public Channel
+{
 public:
-    static TypeId GetTypeId ();
+
+    /**
+    * \brief Get the TypeId
+    *
+    * \return The TypeId for this class
+    */
+    static TypeId GetTypeId (void);
+
+    /**
+    * \brief Create a SatChannel
+    *
+    * By default, you get a channel that has an "infinitely" fast
+    * transmission speed and zero delay.
+    */
     SatChannel ();
-    ~SatChannel ();
+
     /**
     * \returns the number of NetDevices connected to this Channel.
     */
-    uint32_t
-    GetNDevices ();
+    virtual uint32_t GetNDevices () const;
+
     /**
     * \param i index of NetDevice to retrieve
     * \returns one of the NetDevices connected to this channel.
     */
-    Ptr<NetDevice>
-    GetDevice (uint32_t i);
+    virtual Ptr<NetDevice> GetDevice (uint32_t i) const;
+
 private:
     SatChannel (SatChannel const &);
     SatChannel& operator= (SatChannel const &);
     Time          m_delay;    //!< Propagation delay
-    int32_t       m_nDevices; //!< Devices of this channel
+    uint32_t       m_nDevices; //!< Devices of this channel
 };
 }
 
