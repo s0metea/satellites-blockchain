@@ -17,7 +17,6 @@ namespace ns3 {
             Channel(),
             m_delay(Seconds(0.)),
             m_nDevices(0) {
-            //NS_LOG_FUNCTION_NOARGS();
     }
 
     Ptr<NetDevice> SatChannel::GetDevice(uint32_t i) const {
@@ -25,7 +24,6 @@ namespace ns3 {
     }
 
     uint32_t SatChannel::GetNDevices() const {
-        NS_LOG_FUNCTION_NOARGS ();
         return m_nDevices;
     }
 }
