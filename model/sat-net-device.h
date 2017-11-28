@@ -4,7 +4,7 @@
 #include <ns3/data-rate.h>
 #include "sat-channel.h"
 #include "ns3/net-device.h"
-#include "ns3/log.h"
+
 
 namespace ns3 {
 
@@ -65,7 +65,7 @@ public:
     void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
     bool SupportsSendFrom (void) const;
 
-    void SatNetDevice::SetDataRate (DataRate bps);
+    void SetDataRate (DataRate bps);
 
     /**
    * \brief Dispose of the object
@@ -126,6 +126,12 @@ private:
     * \see class DataRate
     */
     DataRate m_bps;
+
+    /**
+    * The interframe gap that the Net Device uses to throttle packet
+    * transmission
+    */
+    Time m_tInterframeGap;
     Ptr<Node> m_node; //!< Node owning this NetDevice
     Mac48Address m_address;
     Ptr<SatChannel> m_channel;
@@ -142,6 +148,7 @@ private:
      * Ethernet.
      */
     uint32_t m_mtu;
+
     /**
     * The Queue which this SatNetDevice uses as a packet source.
     * Management of this Queue has been delegated to the SatNetDevice
@@ -149,7 +156,6 @@ private:
     * \see class DropTailQueue
     */
     Ptr<Queue<Packet> > m_queue;
-
 
     NetDevice::ReceiveCallback m_forwardUp; //!< forward up callback
 

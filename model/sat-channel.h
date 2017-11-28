@@ -2,9 +2,8 @@
 #define SAT_CHANNEL_H
 
 #include "sat-net-device.h"
-#include "ns3/log.h"
-#include "ns3/node.h"
-#include "ns3/channel.h"
+#include <ns3/node.h>
+#include <ns3/channel.h>
 #include <ns3/nstime.h>
 
 namespace ns3 {
@@ -41,6 +40,15 @@ public:
     * \returns one of the NetDevices connected to this channel.
     */
     virtual Ptr<NetDevice> GetDevice (uint32_t i) const;
+
+    /**
+   * \brief Transmit a packet over this channel
+   * \param p Packet to transmit
+   * \param src Source SatNetDevice
+   * \param txTime Transmit time to apply
+   * \returns true if successful (currently always true)
+   */
+    virtual bool TransmitStart (Ptr<const Packet> p, Ptr<SatNetDevice> src, Time txTime);
 
 private:
     SatChannel (SatChannel const &);

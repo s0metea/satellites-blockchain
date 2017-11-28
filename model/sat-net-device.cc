@@ -1,11 +1,10 @@
 #include "sat-channel.h"
-#include "sat-net-device.h"
 #include <ns3/network-module.h>
 #include <ns3/pointer.h>
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("SatNetDevice");
+NS_LOG_COMPONENT_DEFINE ("ns3::SatNetDevice");
 
 NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
 
@@ -29,7 +28,12 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
                                "The MAC address of this device.",
                                Mac48AddressValue (Mac48Address ("ff:ff:ff:ff:ff:ff")),
                                MakeMac48AddressAccessor (&SatNetDevice::m_address),
-                               MakeMac48AddressChecker ());
+                               MakeMac48AddressChecker ())
+                .AddAttribute ("InterframeGap",
+                               "The time to wait between packet (frame) transmissions",
+                               TimeValue (Seconds (0.0)),
+                               MakeTimeAccessor (&SatNetDevice::m_tInterframeGap),
+                               MakeTimeChecker ());
         return tid;
 	}
 
@@ -51,7 +55,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
     }
 
     void
-    SatNetDevice::SetDataRate (DataRate bps)
+    SatNetDevice::SetDataRate(DataRate bps)
     {
         NS_LOG_FUNCTION (this);
         m_bps = bps;
@@ -132,13 +136,67 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         llc.SetType (protocolNumber);
         packet->AddHeader (llc);
 
+        bool ret = false;
         if (m_txMachineState == READY)
         {
             packet = m_queue->Dequeue ();
-            bool ret = TransmitStart (packet);
-            return ret;
+            ret = TransmitStart (packet);
         }
-        return true;
+        return ret;
+    }
+
+    bool
+    SatNetDevice::TransmitStart (Ptr<Packet> p)
+    {
+        NS_LOG_FUNCTION (this << p);
+        NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
+
+        //
+        // This function is called to start the process of transmitting a packet.
+        // We need to tell the channel that we've started wiggling the wire and
+        // schedule an event that will be executed when the transmission is complete.
+        //
+        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
+        m_txMachineState = BUSY;
+        m_currentPkt = p;
+
+        Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
+        Time txCompleteTime = txTime + m_tInterframeGap;
+
+        NS_LOG_LOGIC ("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds () << "sec");
+        Simulator::Schedule (txCompleteTime, &SatNetDevice::TransmitComplete, this);
+
+
+        bool result = m_channel->TransmitStart (p, this, txTime);
+        return result;
+    }
+
+    void
+    SatNetDevice::TransmitComplete (void)
+    {
+        NS_LOG_FUNCTION (this);
+
+        //
+        // This function is called to when we're all done transmitting a packet.
+        // We try and pull another packet off of the transmit queue.  If the queue
+        // is empty, we are done, otherwise we need to start transmitting the
+        // next packet.
+        //
+        NS_ASSERT_MSG (m_txMachineState == BUSY, "Must be BUSY if transmitting");
+        m_txMachineState = READY;
+
+        NS_ASSERT_MSG (m_currentPkt != 0, "SatNetDevice::TransmitComplete()");
+
+        m_currentPkt = 0;
+
+        Ptr<Packet> p = m_queue->Dequeue ();
+        if (p == 0)
+        {
+            NS_LOG_LOGIC ("No pending packets in device queue after tx complete");
+            return;
+        }
+
+        TransmitStart (p);
     }
 
     bool
@@ -223,50 +281,4 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         m_queue = 0;
         NetDevice::DoDispose ();
     }
-
-    bool
-    SatNetDevice::TransmitStart (Ptr<Packet> p)
-    {
-        NS_LOG_FUNCTION (this << p);
-        NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
-        
-        //
-        // This function is called to start the process of transmitting a packet.
-        // We need to tell the channel that we've started wiggling the wire and
-        // schedule an event that will be executed when the transmission is complete.
-        //
-        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
-        m_txMachineState = BUSY;
-        m_currentPkt = p;
-        return true;
-    }
-
-    void
-    SatNetDevice::TransmitComplete (void)
-    {
-        NS_LOG_FUNCTION (this);
-
-        //
-        // This function is called to when we're all done transmitting a packet.
-        // We try and pull another packet off of the transmit queue.  If the queue
-        // is empty, we are done, otherwise we need to start transmitting the
-        // next packet.
-        //
-        NS_ASSERT_MSG (m_txMachineState == BUSY, "Must be BUSY if transmitting");
-        m_txMachineState = READY;
-
-        NS_ASSERT_MSG (m_currentPkt != 0, "SatNetDevice::TransmitComplete()");
-
-        m_currentPkt = 0;
-
-        Ptr<Packet> p = m_queue->Dequeue ();
-        if (p == 0)
-        {
-            NS_LOG_LOGIC ("No pending packets in device queue after tx complete");
-            return;
-        }
-
-        TransmitStart (p);
-    }
-
 }
