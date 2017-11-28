@@ -71,7 +71,7 @@ public:
    * \brief Dispose of the object
    */
     virtual void DoDispose (void);
-    
+
 private:
 
     /**

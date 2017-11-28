@@ -132,7 +132,12 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         llc.SetType (protocolNumber);
         packet->AddHeader (llc);
 
-
+        if (m_txMachineState == READY)
+        {
+            packet = m_queue->Dequeue ();
+            bool ret = TransmitStart (packet);
+            return ret;
+        }
         return true;
     }
 
@@ -140,14 +145,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
     SatNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber)
     {
         NS_LOG_FUNCTION (this << packet << source << dest << protocolNumber);
-        NS_ASSERT (Mac48Address::IsMatchingType (dest));
-        NS_ASSERT (Mac48Address::IsMatchingType (source));
-        LlcSnapHeader llc;
-        llc.SetType (protocolNumber);
-        packet->AddHeader (llc);
-
-
-        return true;
+        return false;
     }
 
     Address
@@ -231,7 +229,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
     {
         NS_LOG_FUNCTION (this << p);
         NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
-
+        
         //
         // This function is called to start the process of transmitting a packet.
         // We need to tell the channel that we've started wiggling the wire and
@@ -240,7 +238,6 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
         m_txMachineState = BUSY;
         m_currentPkt = p;
-
         return true;
     }
 
