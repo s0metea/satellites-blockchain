@@ -16,8 +16,8 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
 		.SetGroupName ("NetDevice")
         .AddAttribute ("DataRate",
                        "The data rate that the Net Device uses to simulate packet transmission timing.",
-                       DataRateValue (DataRate ("1250Mb/s")),
-                       MakeDataRateAccessor (&SatNetDevice::m_bps),
+                       DataRateValue (DataRate ("1250MB/s")),
+                       MakeDataRateAccessor (&SatNetDevice::bps),
                        MakeDataRateChecker ())
                 .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
                                UintegerValue (DEFAULT_MTU),
@@ -31,7 +31,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
                                MakeMac48AddressChecker ())
                 .AddAttribute ("InterframeGap",
                                "The time to wait between packet (frame) transmissions",
-                               TimeValue (Seconds (0.0)),
+                               TimeValue (MicroSeconds (10.0)),
                                MakeTimeAccessor (&SatNetDevice::m_tInterframeGap),
                                MakeTimeChecker ());
         return tid;
@@ -58,7 +58,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
     SatNetDevice::SetDataRate(DataRate bps)
     {
         NS_LOG_FUNCTION (this);
-        m_bps = bps;
+        this->bps = bps;
     }
 
     Ptr<Channel>
@@ -75,7 +75,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
     uint16_t
     SatNetDevice::GetMtu(void) const {
         NS_LOG_FUNCTION (this);
-        return m_mtu;
+        return static_cast<uint16_t>(m_mtu);
     }
 
     Address
@@ -145,32 +145,6 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         return ret;
     }
 
-    bool
-    SatNetDevice::TransmitStart (Ptr<Packet> p)
-    {
-        NS_LOG_FUNCTION (this << p);
-        NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
-
-        //
-        // This function is called to start the process of transmitting a packet.
-        // We need to tell the channel that we've started wiggling the wire and
-        // schedule an event that will be executed when the transmission is complete.
-        //
-        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
-        m_txMachineState = BUSY;
-        m_currentPkt = p;
-
-        Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
-        Time txCompleteTime = txTime + m_tInterframeGap;
-
-        NS_LOG_LOGIC ("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds () << "sec");
-        Simulator::Schedule (txCompleteTime, &SatNetDevice::TransmitComplete, this);
-
-
-        bool result = m_channel->TransmitStart (p, this, txTime);
-        return result;
-    }
-
     void
     SatNetDevice::TransmitComplete (void)
     {
@@ -197,6 +171,31 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         }
 
         TransmitStart (p);
+    }
+
+    bool
+    SatNetDevice::TransmitStart (Ptr<Packet> p)
+    {
+        NS_LOG_FUNCTION (this << p);
+        NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
+
+        //
+        // This function is called to start the process of transmitting a packet.
+        // We need to tell the channel that we've started wiggling the wire and
+        // schedule an event that will be executed when the transmission is complete.
+        //
+        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
+        m_txMachineState = BUSY;
+        m_currentPkt = p;
+
+        Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
+        Time txCompleteTime = txTime + m_tInterframeGap;
+
+        NS_LOG_LOGIC ("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds () << "sec");
+        Simulator::Schedule (txCompleteTime, &SatNetDevice::TransmitComplete, this);
+
+        bool result = m_channel->TransmitStart (this, p, txTime);
+        return result;
     }
 
     bool

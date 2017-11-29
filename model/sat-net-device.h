@@ -63,6 +63,7 @@ public:
     Address GetMulticast (Ipv6Address addr) const;
 
     void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
+
     bool SupportsSendFrom (void) const;
 
     void SetDataRate (DataRate bps);
@@ -121,11 +122,11 @@ private:
     TxMachineState m_txMachineState;
 
     /**
-    * The data rate that the Net Device uses to simulate packet transmission
+    * The data rate in bits per second that the Net Device uses to simulate packet transmission
     * timing.
     * \see class DataRate
     */
-    DataRate m_bps;
+    DataRate bps;
 
     /**
     * The interframe gap that the Net Device uses to throttle packet
@@ -155,7 +156,7 @@ private:
     * and it has the responsibility for deletion.
     * \see class DropTailQueue
     */
-    Ptr<Queue<Packet> > m_queue;
+    Ptr<Queue<Packet>> m_queue;
 
     NetDevice::ReceiveCallback m_forwardUp; //!< forward up callback
 

@@ -7,7 +7,7 @@
 #     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
 
 def build(bld):
-    module = bld.create_ns3_module('sat-net-device', ['core'])
+    module = bld.create_ns3_module('sat-net-device', ['core', 'network', 'internet', 'mobility'])
     module.source = [
         'model/sat-channel.cc',
         'model/sat-net-device.cc',
