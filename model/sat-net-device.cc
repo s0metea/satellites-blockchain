@@ -188,7 +188,7 @@ NS_OBJECT_ENSURE_REGISTERED (SatNetDevice);
         m_txMachineState = BUSY;
         m_currentPkt = p;
 
-        Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
+        Time txTime = bps.CalculateBytesTxTime (p->GetSize ());
         Time txCompleteTime = txTime + m_tInterframeGap;
 
         NS_LOG_LOGIC ("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds () << "sec");

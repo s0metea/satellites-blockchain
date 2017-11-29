@@ -17,6 +17,7 @@
  *
  * Author: Tommaso Pecorella <tommaso.pecorella@unifi.it>
  */
+
 #ifndef SAT_NETDEVICE_HELPER_H
 #define SAT_NETDEVICE_HELPER_H
 

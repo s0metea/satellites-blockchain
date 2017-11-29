@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
-#include "ns3/core-module.h"
+#include <ns3/core-module.h>
 
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
@@ -18,16 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ns3/address.h"
-#include "ns3/mac48-address.h"
-#include "ns3/network-module.h"
-#include "ns3/internet-module.h"
-#include "ns3/point-to-point-module.h"
-#include "ns3/applications-module.h"
-#include "ns3/sat-net-device.h"
+#include <ns3/address.h>
+#include <ns3/mac48-address.h>
+#include <ns3/network-module.h>
+#include <ns3/internet-module.h>
+#include <ns3/point-to-point-module.h>
+#include <ns3/applications-module.h>
+#include <ns3/sat-net-device.h>
 
 using namespace ns3;
-
 
 static
 Ptr<SatNetDevice> CreateNetDevice (Ptr<Node> node)
