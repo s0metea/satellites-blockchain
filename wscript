@@ -23,7 +23,7 @@ def build(bld):
     headers.module = 'satellites-blockchain'
     headers.source = [
         'model/satellite-channel.h',
-        'model/satellite-blockchain-device.h',
+        'model/satellite-net-device.h',
         'helper/satellites-blockchain-helper.h',
         ]
 

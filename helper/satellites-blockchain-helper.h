@@ -2,8 +2,6 @@
 #ifndef SATELLITES_BLOCKCHAIN_HELPER_H
 #define SATELLITES_BLOCKCHAIN_HELPER_H
 
-#include "ns3/satellites-blockchain.h"
-
 namespace ns3 {
 
 /* ... */

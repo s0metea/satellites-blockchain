@@ -4,10 +4,10 @@ project(satellites-blockchain)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        examples/satellites-net-device-example.cc
-        model/satellite-channel.h
         model/satellite.h
+        model/satellite-channel.h
         model/satellite-net-device.h
+        examples/satellites-net-device-example.cc
         model/satellite-channel.cc
         model/satellite-net-device.cc
         model/satellite.cpp
