@@ -14,16 +14,16 @@ using namespace ns3;
 class SatNetDeviceTestCase1 : public TestCase
 {
 public:
-  SatNetDeviceTestCase1 ();
-  virtual ~SatNetDeviceTestCase1 ();
+    SatNetDeviceTestCase1 ();
+    virtual ~SatNetDeviceTestCase1 ();
 
 private:
-  virtual void DoRun (void);
+    virtual void DoRun (void);
 };
 
 // Add some help text to this case to describe what it is intended to test
 SatNetDeviceTestCase1::SatNetDeviceTestCase1 ()
-  : TestCase ("SatNetDevice test case (does nothing)")
+        : TestCase ("SatNetDevice test case (does nothing)")
 {
 }
 
@@ -53,11 +53,11 @@ SatNetDeviceTestCase1::DoRun (void)
 class SatNetDeviceTestSuite : public TestSuite
 {
 public:
-  SatNetDeviceTestSuite ();
+    SatNetDeviceTestSuite ();
 };
 
 SatNetDeviceTestSuite::SatNetDeviceTestSuite ()
-  : TestSuite ("sat-net-device", UNIT)
+        : TestSuite ("sat-net-device", UNIT)
 {
   // TestDuration for TestCase can be QUICK, EXTENSIVE or TAKES_FOREVER
   AddTestCase (new SatNetDeviceTestCase1, TestCase::QUICK);

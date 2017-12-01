@@ -37,8 +37,8 @@
 
 namespace ns3 {
 
-        NS_LOG_COMPONENT_DEFINE ("SatNetDeviceHelper");
+    NS_LOG_COMPONENT_DEFINE ("SatNetDeviceHelper");
 
-        SatNetDeviceHelper::SatNetDeviceHelper () {
-        }
+    SatNetDeviceHelper::SatNetDeviceHelper () {
+    }
 } // namespace ns3

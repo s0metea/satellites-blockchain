@@ -55,6 +55,7 @@ int main (int argc, char *argv[])
     ndc.Add(CreateNetDevice(node1));
     ndc.Add(CreateNetDevice(node2));
 
+    Ptr<SatChannel> channel = CreateObject<SatChannel>();
     InternetStackHelper stack;
     stack.Install (nodes);
 

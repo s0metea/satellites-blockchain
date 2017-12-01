@@ -8,7 +8,7 @@
 #include "ns3/sat-channel.h"
 #include "ns3/sat-net-device.h"
 #include "ns3/mac48-address.h"
-
+#include "ns3/satellite-module.h"
 
 using namespace ns3;
 using namespace std;
@@ -107,13 +107,9 @@ int main (int argc, char *argv[]) {
     }
 
     //Channels setup:
-    cout << "Reading links file..." << endl;
-    vector<vector<vector<bool>>> links = loadLinks(links_file);
-    cout << "Done!" << endl;
-
-    //NetDeviceContainer devices;
-    //OpticalNetDevice nd;
-    //OpticalChannel channel;
+    //cout << "Reading links file..." << endl;
+    //vector<vector<vector<bool>>> links = loadLinks(links_file);
+    //cout << "Done!" << endl;
 
     int moment_of_time = 0;
 

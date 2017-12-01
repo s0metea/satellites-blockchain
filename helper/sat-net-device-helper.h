@@ -33,14 +33,14 @@ namespace ns3 {
 /**
  * \brief build a set of SimpleNetDevice objects
  */
-class SatNetDeviceHelper {
-public:
-  /**
-   * Construct a SimpleNetDeviceHelper.
-   */
-    SatNetDeviceHelper ();
+    class SatNetDeviceHelper {
+    public:
+        /**
+         * Construct a DeviceHelper.
+         */
+        SatNetDeviceHelper ();
 
-};
+    };
 
 } // namespace ns3
 
