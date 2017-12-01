@@ -1,4 +1,4 @@
-#include "satellite-channel.h"
+#include "satellite-net-device.h"
 #include <ns3/network-module.h>
 #include <ns3/pointer.h>
 
@@ -70,7 +70,6 @@ namespace ns3 {
     SatelliteNetDevice::SetChannel(Ptr<SatelliteChannel> channel)  {
         NS_LOG_FUNCTION (this << channel);
         m_channel = channel;
-        m_channel->Add(this);
         m_linkUp = true;
     }
 
@@ -136,10 +135,10 @@ namespace ns3 {
 
 
     bool
-    SatelliteNetDevice::Send(Ptr<Packet> packet, Address &dest)
+    SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocolNumber)
     {
-        NS_LOG_FUNCTION (this << packet << dest);
-        NS_ASSERT (Mac48Address::IsMatchingType (dest));
+        NS_LOG_FUNCTION (this << packet);
+        NS_ASSERT (Mac48Address::IsMatchingType (dst));
         m_queue->Enqueue (packet);
 
         NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
@@ -162,6 +161,12 @@ namespace ns3 {
         Time txCompleteTime = txTime + m_tInterframeGap;
         Simulator::ScheduleWithContext(this->GetNode()->GetId(), txCompleteTime, &SatelliteNetDevice::m_forwardUp, this, packet);
         return true;
+    }
+
+    bool
+    SendFrom (Ptr<Packet> packet, const Address& source, const Address& dest, uint16_t protocolNumber)
+    {
+        return false;
     }
 
     void
@@ -187,7 +192,6 @@ namespace ns3 {
             NS_LOG_LOGIC ("No pending packets in device queue after tx complete");
         } else {
             NS_LOG_LOGIC (this << "Queue is not empty" << p->GetUid());
-            this->Send(p, m_address); //<--- We pass net_device but don't use it
         }
     }
 
@@ -267,5 +271,6 @@ namespace ns3 {
         m_queue = nullptr;
         NetDevice::DoDispose ();
     }
+
 
 }

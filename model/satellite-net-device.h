@@ -2,7 +2,6 @@
 #define SAT_NETDEVICE_H
 
 #include <ns3/data-rate.h>
-#include "satellite-channel.h"
 #include "ns3/queue.h"
 #include "ns3/net-device.h"
 
@@ -51,7 +50,7 @@ namespace ns3 {
         bool IsPointToPoint (void) const;
         bool IsBridge (void) const;
 
-        bool Send (Ptr<Packet> packet, Address &to);
+        bool Send (Ptr<Packet> packet, const Address&, uint16_t protocolNumber);
         bool Receive (Ptr<Packet> packet, Address &from);
 
         Ptr<Node> GetNode (void) const;

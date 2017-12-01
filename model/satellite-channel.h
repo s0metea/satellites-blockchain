@@ -1,13 +1,15 @@
 #ifndef SAT_CHANNEL_H
 #define SAT_CHANNEL_H
 
-#include "satellite-net-device.h"
 #include <ns3/node.h>
 #include <ns3/channel.h>
 #include <ns3/nstime.h>
 #include <ns3/propagation-delay-model.h>
+#include <ns3/satellite-net-device.h>
 
 namespace ns3 {
+
+    class SatelliteNetDevice;
 
     class SatelliteChannel: public Channel
     {
@@ -28,18 +30,18 @@ namespace ns3 {
         */
         SatelliteChannel ();
 
-        virtual ~SatelliteChannel ();
+        ~SatelliteChannel ();
 
         /**
         * \returns the number of NetDevices connected to this Channel.
         */
-        virtual uint32_t GetNDevices () const;
+        uint32_t GetNDevices () const;
 
         /**
         * \param i index of NetDevice to retrieve
         * \returns one of the NetDevices connected to this channel.
         */
-        virtual Ptr<NetDevice> GetDevice (uint32_t i) const;
+        Ptr<NetDevice> GetDevice (uint32_t i) const;
 
         /**
         * Adds the given SatNetDevice to the NetDevice list
@@ -63,7 +65,7 @@ namespace ns3 {
         *\\param to
         *\\param sender
         */
-        void Send(Ptr<Packet> packet, uint16_t protocol, Address &to, Ptr<SatelliteNetDevice> sender);
+        void Send(Ptr<Packet> packet, uint16_t protocol, const Address &to, Ptr<NetDevice> sender);
 
     private:
         SatelliteChannel (SatelliteChannel const &);
