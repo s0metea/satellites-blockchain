@@ -24,7 +24,7 @@ def build(bld):
     headers.source = [
         'model/satellite-channel.h',
         'model/satellite-blockchain-device.h',
-        'helper/satellite-blockchain-helper.h',
+        'helper/satellites-blockchain-helper.h',
         ]
 
     if bld.env.ENABLE_EXAMPLES:

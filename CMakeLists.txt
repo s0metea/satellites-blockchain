@@ -4,23 +4,17 @@ project(satellites-blockchain)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        doc/satellites-blockchain.rst
-        examples/json.hpp
-        examples/satellites-blockchain.cc
         examples/satellites-net-device-example.cc
-        helper/satellites-net-device-helper.cc
-        helper/satellites-net-device-helper.h
-        model/satellite-channel.cc
         model/satellite-channel.h
-        model/satellite-net-device.cc
-        model/satellite-net-device.h
-        model/satellite.cpp
         model/satellite.h
-        test/satellite-net-device-test-suite.cc
+        model/satellite-net-device.h
+        model/satellite-channel.cc
+        model/satellite-net-device.cc
+        model/satellite.cpp
         wscript)
 
-include_directories(/media/sometea/Data/ns-3-dev/build/)
-link_directories(/media/sometea/Data/ns-3-dev/build)
+include_directories(~/NS3/ns-3-dev/build/)
+link_directories(~NS3/ns-3-dev/build)
 
 add_executable(satellites-blockchain ${SOURCE_FILES})
 
