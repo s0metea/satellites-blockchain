@@ -20,11 +20,11 @@ def build(bld):
         ]
 
     headers = bld(features='ns3header')
-    headers.module = 'satellite-net-device'
+    headers.module = 'satellites-blockchain'
     headers.source = [
         'model/satellite-channel.h',
-        'model/satellite-net-device.h',
-        'helper/satellite-net-device-helper.h',
+        'model/satellite-blockchain-device.h',
+        'helper/satellite-blockchain-helper.h',
         ]
 
     if bld.env.ENABLE_EXAMPLES:
