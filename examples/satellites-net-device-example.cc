@@ -24,18 +24,11 @@
 #include <ns3/internet-module.h>
 #include <ns3/point-to-point-module.h>
 #include <ns3/applications-module.h>
-#include <ns3/sat-net-device.h>
+#include <ns3/satellite-net-device.h>
+#include <ns3/satellite-channel.h>
 
 using namespace ns3;
 
-static
-Ptr<SatNetDevice> CreateNetDevice (Ptr<Node> node)
-{
-    Ptr<SatNetDevice> device = CreateObject<SatNetDevice> ();
-    device->SetAddress(Mac48Address::Allocate());
-    device->SetNode(node);
-    return device;
-}
 
 int main (int argc, char *argv[])
 {
@@ -46,27 +39,38 @@ int main (int argc, char *argv[])
     LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
     LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
+    Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel>();
+    Ptr<Node> node1 = CreateObject<Node>();
+    Ptr<Node> node2 = CreateObject<Node>();
+    Ptr<SatelliteNetDevice> device1 = CreateObject<SatelliteNetDevice> ();
+    Ptr<SatelliteNetDevice> device2 = CreateObject<SatelliteNetDevice> ();
+    node1->AddDevice(device1);
+    node2->AddDevice(device2);
+    device1->SetChannel(channel);
+    device2->SetChannel(channel);
+    channel->Add(device1);
+    channel->Add(device2);
+
     NodeContainer nodes;
-    nodes.Create (2);
-    Ptr<Node> node1 = nodes.Get(0);
-    Ptr<Node> node2 = nodes.Get(1);
+    nodes.Add(node1);
+    nodes.Add(node2);
 
-    NetDeviceContainer ndc;
-    ndc.Add(CreateNetDevice(node1));
-    ndc.Add(CreateNetDevice(node2));
+    NetDeviceContainer NetDevices;
+    NetDevices.Add(node1);
+    NetDevices.Add(node2);
 
-    Ptr<SatChannel> channel = CreateObject<SatChannel>();
     InternetStackHelper stack;
-    stack.Install (nodes);
+    stack.Install(nodes);
+
 
     Ipv4AddressHelper address;
     address.SetBase ("10.1.1.0", "255.255.255.0");
 
-    Ipv4InterfaceContainer interfaces = address.Assign (ndc);
+    Ipv4InterfaceContainer interfaces = address.Assign (NetDevices);
 
     UdpEchoServerHelper echoServer (9);
 
-    ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
+    ApplicationContainer serverApps = echoServer.Install (node1);
     serverApps.Start (Seconds (1.0));
     serverApps.Stop (Seconds (10.0));
 
@@ -75,7 +79,7 @@ int main (int argc, char *argv[])
     echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
     echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-    ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
+    ApplicationContainer clientApps = echoClient.Install (node2);
     clientApps.Start (Seconds (2.0));
     clientApps.Stop (Seconds (10.0));
 

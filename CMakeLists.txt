@@ -4,14 +4,11 @@ project(satellites-blockchain)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        model/satellite.h
         model/satellite-channel.h
         model/satellite-net-device.h
         examples/satellites-net-device-example.cc
         model/satellite-channel.cc
-        model/satellite-net-device.cc
-        model/satellite.cpp
-        wscript)
+        model/satellite-net-device.cc)
 
 include_directories(~/NS3/ns-3-dev/build/)
 link_directories(~NS3/ns-3-dev/build)

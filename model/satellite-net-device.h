@@ -2,6 +2,7 @@
 #define SAT_NETDEVICE_H
 
 #include <ns3/data-rate.h>
+#include <ns3/satellite-channel.h>
 #include "ns3/queue.h"
 #include "ns3/net-device.h"
 
@@ -9,7 +10,7 @@
 namespace ns3 {
 
     template <typename Item> class Queue;
-    class SatelliteChannel;
+    class NetDevice;
 
     class SatelliteNetDevice: public NetDevice
     {

@@ -149,7 +149,7 @@ namespace ns3 {
         Time txCompleteTime = txTime + m_tInterframeGap;
 
         NS_LOG_LOGIC ("Schedule TransmitComplete event in " << txCompleteTime.GetSeconds () << "sec");
-        Simulator::ScheduleWithContext(this->GetChannel()->GetId(), txTime, &SatelliteChannel::Send, this->GetChannel(), packet, this->m_address, dest);
+        Simulator::ScheduleWithContext(this->GetChannel()->GetId(), txTime, &SatelliteChannel::Send, this->GetChannel(), packet, this->m_address, dst);
         Simulator::ScheduleWithContext(this->GetNode()->GetId(), txCompleteTime, &SatelliteNetDevice::TransmitComplete, this);
         return true;
     }

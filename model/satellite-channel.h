@@ -9,11 +9,11 @@
 
 namespace ns3 {
 
-    class SatelliteNetDevice;
+class SatelliteNetDevice;
 
-    class SatelliteChannel: public Channel
-    {
-    public:
+class SatelliteChannel: public Channel
+{
+public:
 
         /**
         * \brief Get the TypeId
@@ -67,7 +67,7 @@ namespace ns3 {
         */
         void Send(Ptr<Packet> packet, uint16_t protocol, const Address &to, Ptr<NetDevice> sender);
 
-    private:
+private:
         SatelliteChannel (SatelliteChannel const &);
         SatelliteChannel& operator= (SatelliteChannel const &);
         Ptr<PropagationDelayModel> m_delay; //!< Propagation delay model
