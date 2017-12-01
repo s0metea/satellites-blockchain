@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 // Include a header file from your module to test.
-#include "ns3/sat-net-device.h"
+#include "ns3/satellites-blockchain.h"
 
 // An essential include is test.h
 #include "ns3/test.h"
@@ -11,25 +11,25 @@
 using namespace ns3;
 
 // This is an example TestCase.
-class SatNetDeviceTestCase1 : public TestCase
+class SatellitesBlockchainTestCase1 : public TestCase
 {
 public:
-    SatNetDeviceTestCase1 ();
-    virtual ~SatNetDeviceTestCase1 ();
+  SatellitesBlockchainTestCase1 ();
+  virtual ~SatellitesBlockchainTestCase1 ();
 
 private:
-    virtual void DoRun (void);
+  virtual void DoRun (void);
 };
 
 // Add some help text to this case to describe what it is intended to test
-SatNetDeviceTestCase1::SatNetDeviceTestCase1 ()
-        : TestCase ("SatNetDevice test case (does nothing)")
+SatellitesBlockchainTestCase1::SatellitesBlockchainTestCase1 ()
+  : TestCase ("SatellitesBlockchain test case (does nothing)")
 {
 }
 
 // This destructor does nothing but we include it as a reminder that
 // the test case should clean up after itself
-SatNetDeviceTestCase1::~SatNetDeviceTestCase1 ()
+SatellitesBlockchainTestCase1::~SatellitesBlockchainTestCase1 ()
 {
 }
 
@@ -38,7 +38,7 @@ SatNetDeviceTestCase1::~SatNetDeviceTestCase1 ()
 // TestCase must implement
 //
 void
-SatNetDeviceTestCase1::DoRun (void)
+SatellitesBlockchainTestCase1::DoRun (void)
 {
   // A wide variety of test macros are available in src/core/test.h
   NS_TEST_ASSERT_MSG_EQ (true, true, "true doesn't equal true for some reason");
@@ -50,19 +50,19 @@ SatNetDeviceTestCase1::DoRun (void)
 // and enables the TestCases to be run.  Typically, only the constructor for
 // this class must be defined
 //
-class SatNetDeviceTestSuite : public TestSuite
+class SatellitesBlockchainTestSuite : public TestSuite
 {
 public:
-    SatNetDeviceTestSuite ();
+  SatellitesBlockchainTestSuite ();
 };
 
-SatNetDeviceTestSuite::SatNetDeviceTestSuite ()
-        : TestSuite ("sat-net-device", UNIT)
+SatellitesBlockchainTestSuite::SatellitesBlockchainTestSuite ()
+  : TestSuite ("satellites-blockchain", UNIT)
 {
   // TestDuration for TestCase can be QUICK, EXTENSIVE or TAKES_FOREVER
-  AddTestCase (new SatNetDeviceTestCase1, TestCase::QUICK);
+  AddTestCase (new SatellitesBlockchainTestCase1, TestCase::QUICK);
 }
 
 // Do not forget to allocate an instance of this TestSuite
-static SatNetDeviceTestSuite satNetDeviceTestSuite;
+static SatellitesBlockchainTestSuite satellitesBlockchainTestSuite;
 

@@ -7,16 +7,16 @@
 #     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
 
 def build(bld):
-    module = bld.create_ns3_module('satellite-net-device', ['core', 'network', 'internet', 'mobility'])
+    module = bld.create_ns3_module('satellites-blockchain', ['core', 'network', 'internet', 'mobility'])
     module.source = [
         'model/satellite-channel.cc',
         'model/satellite-net-device.cc',
-        'helper/satellite-net-device-helper.cc',
+        'helper/satellites-blockchain-helper.cc',
         ]
 
-    module_test = bld.create_ns3_module_test_library('satellite-net-device')
+    module_test = bld.create_ns3_module_test_library('satellites-blockchain')
     module_test.source = [
-        'test/satellite-net-device-test-suite.cc',
+        'test/satellites-blockchain-test-suite.cc',
         ]
 
     headers = bld(features='ns3header')

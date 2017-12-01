@@ -23,7 +23,7 @@ are defined in the file ``replace.txt``.
 Model Description
 *****************
 
-The source code for the new module lives in the directory ``src/sat-net-device``.
+The source code for the new module lives in the directory ``src/satellites-blockchain``.
 
 Add here a basic description of what is being modeled.
 
