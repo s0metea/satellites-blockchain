@@ -1,89 +1,78 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-
 #include <ns3/core-module.h>
-
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/*
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-#include <ns3/address.h>
-#include <ns3/mac48-address.h>
 #include <ns3/network-module.h>
-#include <ns3/internet-module.h>
-#include <ns3/point-to-point-module.h>
-#include <ns3/applications-module.h>
-#include <ns3/satellite-net-device.h>
 #include <ns3/satellite-channel.h>
+#include <ns3/satellite-net-device.h>
+#include <ns3/internet-module.h>
+#include <ns3/udp-client-server-helper.h>
+#include <ns3/propagation-delay-model.h>
+#include <ns3/callback.h>
+#include <ns3/log.h>
 
-using namespace ns3;
+namespace ns3 {
 
+    NS_LOG_COMPONENT_DEFINE("ns3::SatellitesExample");
 
-int main (int argc, char *argv[])
-{
-    CommandLine cmd;
-    cmd.Parse (argc, argv);
+    void main(int argc, char *argv[]) {
 
-    Time::SetResolution (Time::NS);
-    LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
-    LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
-
-    Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel>();
-    Ptr<Node> node1 = CreateObject<Node>();
-    Ptr<Node> node2 = CreateObject<Node>();
-    Ptr<SatelliteNetDevice> device1 = CreateObject<SatelliteNetDevice> ();
-    Ptr<SatelliteNetDevice> device2 = CreateObject<SatelliteNetDevice> ();
-    node1->AddDevice(device1);
-    node2->AddDevice(device2);
-    device1->SetChannel(channel);
-    device2->SetChannel(channel);
-    channel->Add(device1);
-    channel->Add(device2);
-
-    NodeContainer nodes;
-    nodes.Add(node1);
-    nodes.Add(node2);
-
-    NetDeviceContainer NetDevices;
-    NetDevices.Add(node1);
-    NetDevices.Add(node2);
-
-    InternetStackHelper stack;
-    stack.Install(nodes);
+        NS_LOG_INFO ("Objects creation");
+        Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
+        Ptr<Node> client = CreateObject<Node> ();
+        Ptr<Node> server = CreateObject<Node> ();
+        Ptr<SatelliteNetDevice> clientNetDevice = CreateObject<SatelliteNetDevice> ();
+        Ptr<SatelliteNetDevice> serverNetDevice = CreateObject<SatelliteNetDevice> ();
+        NetDeviceContainer netDevices;
+        NodeContainer nodes;
+        nodes.Add(client);
+        nodes.Add(server);
 
 
-    Ipv4AddressHelper address;
-    address.SetBase ("10.1.1.0", "255.255.255.0");
+        NS_LOG_INFO ("NetDevices setup");
+        clientNetDevice->SetNode(client);
+        serverNetDevice->SetNode(server);
+        netDevices.Add(clientNetDevice);
+        netDevices.Add(serverNetDevice);
 
-    Ipv4InterfaceContainer interfaces = address.Assign (NetDevices);
+        NS_LOG_INFO ("Channel setup");
+        channel->Add(clientNetDevice);
+        channel->Add(serverNetDevice);
 
-    UdpEchoServerHelper echoServer (9);
+        InternetStackHelper internet;
+        internet.Install(nodes);
 
-    ApplicationContainer serverApps = echoServer.Install (node1);
-    serverApps.Start (Seconds (1.0));
-    serverApps.Stop (Seconds (10.0));
+        NS_LOG_INFO ("Assign IP Addresses.");
+        Ipv4AddressHelper ipv4;
+        ipv4.SetBase ("10.1.1.0", "255.255.255.0");
+        Ipv4InterfaceContainer i = ipv4.Assign (netDevices);
+        Address serverAddress = Address(i.GetAddress (1));
 
-    UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
-    echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-    echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-    echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+        NS_LOG_INFO ("Create Application.");
+        //
+        // Create udpServer application on server:
+        //
+        uint16_t port = 4000;
+        UdpServerHelper serverHelper (port);
+        ApplicationContainer apps = serverHelper.Install (server);
+        apps.Start (Seconds (1.0));
+        apps.Stop (Seconds (10.0));
 
-    ApplicationContainer clientApps = echoClient.Install (node2);
-    clientApps.Start (Seconds (2.0));
-    clientApps.Stop (Seconds (10.0));
+        //
+        // Create one UdpClient application to send UDP datagrams from node zero to
+        // node one.
+        //
+        uint32_t MaxPacketSize = 1024;
+        Time interPacketInterval = Seconds (0.05);
+        uint32_t maxPacketCount = 320;
+        UdpClientHelper clientHelper (serverAddress, port);
+        clientHelper.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
+        clientHelper.SetAttribute ("Interval", TimeValue (interPacketInterval));
+        clientHelper.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
+        apps = clientHelper.Install (client);
+        apps.Start (Seconds (2.0));
+        apps.Stop (Seconds (10.0));
 
-    Simulator::Run ();
-    Simulator::Destroy ();
-    return 0;
+        NS_LOG_INFO ("Run Simulation.");
+        Simulator::Run ();
+        Simulator::Destroy ();
+        NS_LOG_INFO ("Done.");
+    }
 }

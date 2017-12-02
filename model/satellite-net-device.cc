@@ -19,16 +19,16 @@ namespace ns3 {
                                DataRateValue (DataRate ("1250MB/s")),
                                MakeDataRateAccessor (&SatelliteNetDevice::bps),
                                MakeDataRateChecker ())
+                .AddAttribute ("Address",
+                               "The MAC address of this device.",
+                               AddressValue (Mac48Address::Allocate()),
+                               MakeAddressAccessor (&SatelliteNetDevice::m_address),
+                               MakeAddressChecker ())
                 .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
                                UintegerValue (DEFAULT_MTU),
                                MakeUintegerAccessor (&SatelliteNetDevice::SetMtu,
                                                      &SatelliteNetDevice::GetMtu),
                                MakeUintegerChecker<uint16_t> ())
-                .AddAttribute ("Address",
-                               "The MAC address of this device.",
-                               Mac48AddressValue (Mac48Address ("ff:ff:ff:ff:ff:ff")),
-                               MakeMac48AddressAccessor (&SatelliteNetDevice::m_address),
-                               MakeMac48AddressChecker ())
                 .AddAttribute ("InterframeGap",
                                "The time to wait between packet (frame) transmissions",
                                TimeValue (MicroSeconds (static_cast<uint64_t>(10.0))),
@@ -50,7 +50,8 @@ namespace ns3 {
     }
 
     void
-    SatelliteNetDevice::SetIfIndex(const uint32_t index) {
+    SatelliteNetDevice::SetIfIndex(const uint32_t index)
+    {
 
     }
 
@@ -59,6 +60,20 @@ namespace ns3 {
     {
         NS_LOG_FUNCTION (this);
         this->bps = bps;
+    }
+
+    Ptr<Queue<Packet>>
+    SimpleNetDevice::GetQueue () const
+    {
+        NS_LOG_FUNCTION (this);
+        return m_queue;
+    }
+
+    void
+    SimpleNetDevice::SetQueue (Ptr<Queue<Packet>> q)
+    {
+        NS_LOG_FUNCTION (this << q);
+        m_queue = q;
     }
 
     Ptr<Channel>
@@ -70,13 +85,18 @@ namespace ns3 {
     SatelliteNetDevice::SetChannel(Ptr<SatelliteChannel> channel)  {
         NS_LOG_FUNCTION (this << channel);
         m_channel = channel;
-        m_linkUp = true;
     }
 
     void
     SatelliteNetDevice::SetAddress(Address address) {
-        NS_LOG_FUNCTION (this << address);
         m_address = Mac48Address::ConvertFrom(address);
+        NS_LOG_FUNCTION (this << m_address);
+    }
+
+    Address
+    SatelliteNetDevice::GetAddress(void) const
+    {
+        return m_address ;
     }
 
     uint16_t
@@ -85,11 +105,6 @@ namespace ns3 {
         return static_cast<uint16_t>(m_mtu);
     }
 
-    Address
-    SatelliteNetDevice::GetAddress(void) const
-    {
-        return m_address;
-    }
 
     bool
     SatelliteNetDevice::SupportsSendFrom(void) const
@@ -104,9 +119,15 @@ namespace ns3 {
     }
 
     Address
+    SatelliteNetDevice::GetMulticast(Ipv4Address multicastGroup) const
+    {
+        return Mac48Address::GetMulticast(multicastGroup);
+    }
+
+    Address
     SatelliteNetDevice::GetMulticast(Ipv6Address addr) const
     {
-        return Address();
+        return Mac48Address::GetMulticast(addr);
     }
 
     void
@@ -125,6 +146,7 @@ namespace ns3 {
     SatelliteNetDevice::SetNode(Ptr<Node> node)
     {
         m_node = node;
+        node->AddDevice(this);
     }
 
     Ptr<Node>
@@ -135,142 +157,136 @@ namespace ns3 {
 
 
     bool
-    SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocolNumber)
+    SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
         NS_LOG_FUNCTION (this << packet);
-        NS_ASSERT (Mac48Address::IsMatchingType (dst));
-        m_queue->Enqueue (packet);
-
-        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
-        m_txMachineState = BUSY;
-        m_currentPkt = packet;
-
-        Time txTime = bps.CalculateBytesTxTime (packet->GetSize ());
-        Time txCompleteTime = txTime + m_tInterframeGap;
-
-        NS_LOG_LOGIC ("Schedule TransmitComplete event in " << txCompleteTime.GetSeconds () << "sec");
-        Simulator::ScheduleWithContext(this->GetChannel()->GetId(), txTime, &SatelliteChannel::Send, this->GetChannel(), packet, this->m_address, dst);
-        Simulator::ScheduleWithContext(this->GetNode()->GetId(), txCompleteTime, &SatelliteNetDevice::TransmitComplete, this);
-        return true;
-    }
-
-    bool
-    SatelliteNetDevice::Receive (Ptr<Packet> packet, Address &from) {
-        NS_LOG_FUNCTION (this << packet << from);
-        Time txTime = bps.CalculateBytesTxTime (packet->GetSize ());
-        Time txCompleteTime = txTime + m_tInterframeGap;
-        Simulator::ScheduleWithContext(this->GetNode()->GetId(), txCompleteTime, &SatelliteNetDevice::m_forwardUp, this, packet);
-        return true;
-    }
-
-    bool
-    SendFrom (Ptr<Packet> packet, const Address& source, const Address& dest, uint16_t protocolNumber)
-    {
-        return false;
-    }
-
-    void
-    SatelliteNetDevice::TransmitComplete (void)
-    {
-        NS_LOG_FUNCTION (this);
-
-        //
-        // This function is called in moment we're all done transmitting a packet.
-        // We try and pull another packet off of the transmit queue.  If the queue
-        // is empty, we are done, otherwise we need to start transmitting the
-        // next packet.m_address
-        //
         NS_ASSERT_MSG (m_txMachineState == BUSY, "Must be BUSY if transmitting");
         m_txMachineState = READY;
-
-        NS_ASSERT_MSG (m_currentPkt != nullptr, "SatelliteNetDevice::TransmitComplete()");
-
-        m_currentPkt = nullptr;
-
-        Ptr<Packet> p = m_queue->Dequeue ();
-        if (p == nullptr) {
-            NS_LOG_LOGIC ("No pending packets in device queue after tx complete");
-        } else {
-            NS_LOG_LOGIC (this << "Queue is not empty" << p->GetUid());
-        }
-    }
-
-    Address
-    SatelliteNetDevice::GetMulticast(Ipv4Address multicastGroup) const
-    {
-        return Address();
+        m_currentPkt = packet;
+        m_address = dst;
+        m_protocol = protocol;
+        m_queue->Enqueue(packet);
+        Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
+        NS_LOG_INFO ("m_tInterframeGap: " << m_tInterframeGap);
+        NS_LOG_INFO ("TX time: " << txTime);
+        Time totalTime = txTime + m_tInterframeGap;
+        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::TX, this);
+        return true;
     }
 
     bool
-    SatelliteNetDevice::IsMulticast(void) const
-    {
+    SatelliteNetDevice::TX() {
+        NS_LOG_FUNCTION (this);
+        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
+        m_txMachineState = BUSY;
+        Time totalTime = m_tInterframeGap;
+        if(m_queue->GetNPackets() > 0) {
+            this->m_channel->Send(m_queue->Dequeue(), m_protocol, m_address, this);
+            m_currentPkt = nullptr;
+            totalTime += bps.CalculateBytesTxTime (m_currentPkt->GetSize());
+            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::TX, this);
+            return true;
+        }
         return false;
     }
 
     bool
-    SatelliteNetDevice::IsBroadcast(void) const
+    SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol)
     {
+        NS_LOG_FUNCTION (this << packet);
+        Time totalTime = m_tInterframeGap;
+        if(m_queue->GetNPackets() > 0) {
+            totalTime += bps.CalculateBytesTxTime (packet->GetSize());
+            m_queue->Enqueue(packet);
+            m_currentPkt = packet;
+            m_address = src;
+            m_protocol = protocol;
+            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
+            return true;
+        }
+        return false;
+    }
+
+    bool SatelliteNetDevice::RX() {
+        NS_LOG_FUNCTION (this);
+        Time totalTime = m_tInterframeGap;
+        if(m_queue->GetNPackets() > 0) {
+            m_currentPkt = m_queue->Dequeue();
+            totalTime += bps.CalculateBytesTxTime (m_currentPkt->GetSize());
+            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
+            return true;
+        }
+        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::ForwardUp, this);
+        return false;
+    }
+
+    bool SatelliteNetDevice::ForwardUp() {
+        m_forwardUp (this, m_currentPkt, m_protocol, m_address);
+        return true;
+    }
+
+    bool
+    SatelliteNetDevice::IsMulticast(void) const {
+        return false;
+    }
+
+    bool
+    SatelliteNetDevice::IsBroadcast(void) const {
         return true;
     }
 
     Address
-    SatelliteNetDevice::GetBroadcast(void) const
-    {
+    SatelliteNetDevice::GetBroadcast(void) const {
         NS_LOG_FUNCTION (this);
-        return Mac48Address ("ff:ff:ff:ff:ff:ff");
+        return Mac48Address::GetBroadcast();
     }
 
     bool
-    SatelliteNetDevice::IsLinkUp(void) const
-    {
+    SatelliteNetDevice::IsLinkUp(void) const {
         NS_LOG_FUNCTION (this);
         return m_linkUp;
     }
 
-    void
-    SatelliteNetDevice::AddLinkChangeCallback(Callback<void> callback)
-    {
-        NS_LOG_FUNCTION (this << "Empty");
-
-    }
-
     bool
-    SatelliteNetDevice::SetMtu(const uint16_t mtu)
-    {
+    SatelliteNetDevice::SetMtu(const uint16_t mtu) {
         NS_LOG_FUNCTION (this << mtu);
         m_mtu = mtu;
         return true;
     }
 
     uint32_t
-    SatelliteNetDevice::GetIfIndex(void) const
-    {
+    SatelliteNetDevice::GetIfIndex(void) const {
         return 0;
     }
 
 
     bool
-    SatelliteNetDevice::IsBridge(void) const
-    {
+    SatelliteNetDevice::IsBridge(void) const {
         return false;
     }
 
     bool
-    SatelliteNetDevice::IsPointToPoint(void) const
-    {
+    SatelliteNetDevice::IsPointToPoint(void) const {
         return false;
     }
 
-    void
-    SatelliteNetDevice::DoDispose ()
-    {
-        NS_LOG_FUNCTION (this);
-        m_node = nullptr;
-        m_channel = nullptr;
-        m_currentPkt = nullptr;
-        m_queue = nullptr;
-        NetDevice::DoDispose ();
+    void SatelliteNetDevice::AddLinkChangeCallback(Callback<void> callback) {
+
     }
 
+    void
+    SatelliteNetDevice::DoDispose() {
+        NS_LOG_FUNCTION (this);
+        m_node = 0;
+        m_channel = 0;
+        m_currentPkt = 0;
+        m_queue = 0;
+        NetDevice::DoDispose();
+    }
 
+    bool SatelliteNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest,
+                                      uint16_t protocolNumber) {
+        return false;
+    }
 }
+

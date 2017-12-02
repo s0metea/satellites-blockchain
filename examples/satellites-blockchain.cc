@@ -1,14 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <ns3/satellite-net-device.h>
 
 #include "ns3/core-module.h"
 #include "ns3/mobility-module.h"
 #include "json.hpp"
-#include "ns3/sat-channel.h"
-#include "ns3/sat-net-device.h"
 #include "ns3/mac48-address.h"
-#include "ns3/satellite-module.h"
 
 using namespace ns3;
 using namespace std;
@@ -49,7 +47,7 @@ vector<vector<vector<bool>>> loadLinks(string filename){
     return links;
 }
 
-static Ptr<SatNetDevice> CreateSimpleDevice (Ptr<Node> node)
+static Ptr<SatelliteNetDevice> CreateSimpleDevice (Ptr<Node> node)
 {
     //Ptr<OpticalNetDevice> device = CreateObject<OpticalNetDevice> ();
     //device->SetAddress(Mac48Address::Allocate());
@@ -65,8 +63,7 @@ static void CourseChange (std::ostream *os, std::string foo, Ptr<const MobilityM
     *os << Simulator::Now () << " POS: x=" << pos.x << ", y=" << pos.y << ", z=" << pos.z  << " VEL: x=" << vel.x << ", y=" << vel.y << ", z=" << vel.z << endl;
     *os << foo << endl;
     //Here we need to modify available channel for the node net device
-    Ptr<SatChannel> channel = CreateObject<SatChannel> ();
-    //device->SetChannel(channel);
+    Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
 }
 
 

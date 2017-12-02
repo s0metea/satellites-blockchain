@@ -9,158 +9,157 @@
 
 namespace ns3 {
 
-    template <typename Item> class Queue;
-    class NetDevice;
+template <typename Item> class Queue;
+class NetDevice;
 
-    class SatelliteNetDevice: public NetDevice
-    {
-    public:
-        /**
-        * \brief Get the TypeId
-        *
-        * \return The TypeId for this class
-        */
-        static TypeId GetTypeId ();
+class SatelliteNetDevice: public NetDevice {
 
-        SatelliteNetDevice ();
+public:
 
-        virtual ~SatelliteNetDevice ();
+    /**
+    * \brief Get the TypeId
+    *
+    * \return The TypeId for this class
+    */
+    static TypeId GetTypeId();
 
-        //inherited from NetDevice base class.
-        void SetIfIndex (const uint32_t index);
-        uint32_t GetIfIndex (void) const;
+    SatelliteNetDevice();
 
-        void SetChannel(Ptr<SatelliteChannel> channel);
-        Ptr<Channel> GetChannel (void) const;
+    virtual ~SatelliteNetDevice();
 
-        void SetAddress (Address address);
-        Address GetAddress (void) const;
+    //inherited from NetDevice base class.
+    void SetIfIndex(const uint32_t index);
 
-        bool SetMtu (const uint16_t mtu);
-        uint16_t GetMtu (void) const;
+    uint32_t GetIfIndex(void) const;
 
-        bool IsLinkUp (void) const;
-        void AddLinkChangeCallback (Callback<void> callback);
+    void SetChannel(Ptr<SatelliteChannel> channel);
 
-        bool IsBroadcast (void) const;
-        Address GetBroadcast (void) const;
+    Ptr<Channel> GetChannel(void) const override;
 
-        bool IsMulticast (void) const;
-        Address GetMulticast (Ipv4Address multicastGroup) const;
+    void SetAddress(Address address);
 
-        bool IsPointToPoint (void) const;
-        bool IsBridge (void) const;
+    Address GetAddress(void) const;
 
-        bool Send (Ptr<Packet> packet, const Address&, uint16_t protocolNumber);
-        bool Receive (Ptr<Packet> packet, Address &from);
+    bool SetMtu(const uint16_t mtu);
 
-        Ptr<Node> GetNode (void) const;
+    uint16_t GetMtu(void) const;
 
-        void SetNode (Ptr<Node> node);
+    bool IsLinkUp(void) const;
 
-        bool NeedsArp (void) const;
+    void AddLinkChangeCallback(Callback<void> callback);
 
-        void SetReceiveCallback (NetDevice::ReceiveCallback cb);
+    bool IsBroadcast(void) const;
 
-        Address GetMulticast (Ipv6Address addr) const;
+    Address GetBroadcast(void) const;
 
-        void SetPromiscReceiveCallback (PromiscReceiveCallback cb);
+    bool IsMulticast(void) const;
 
-        bool SupportsSendFrom (void) const;
+    Address GetMulticast(Ipv4Address multicastGroup) const;
 
-        void SetDataRate (DataRate bps);
+    bool IsPointToPoint(void) const;
 
-        /**
-        * \brief Dispose of the object
-        */
-        virtual void DoDispose (void);
+    bool IsBridge(void) const;
 
-    private:
+    bool Send(Ptr<Packet> packet, const Address &to, uint16_t protocol) override;
 
-        /**
-        * Enumeration of the states of the transmit machine of the net device.
-        */
-        enum TxMachineState
-        {
-            READY,   /**< The transmitter is ready to begin transmission of a packet */
-            BUSY     /**< The transmitter is busy transmitting a packet */
-        };
+    bool SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber) override;
 
+    Ptr<Node> GetNode(void) const;
+    void SetNode(Ptr<Node> node);
 
-        /**
-         * Stop Sending a Packet and Begin the Interframe Gap.
-         *
-         * The TransmitComplete method is used internally to finish the process
-         * of sending a packet out on the channel.
-         */
-        void TransmitComplete (void);
+    bool NeedsArp(void) const;
+    Address GetMulticast(Ipv6Address addr) const;
 
+    void SetReceiveCallback(NetDevice::ReceiveCallback cb);
+    void SetPromiscReceiveCallback(NetDevice::PromiscReceiveCallback cb);
 
-        /**
-        * The state of the Net Device transmit state machine.
-        * \see TxMachineState
-        */
-        TxMachineState m_txMachineState;
+    bool SupportsSendFrom(void) const;
 
-        /**
-        * The data rate in bits per second that the Net Device uses to simulate packet transmission
-        * timing.bps
-        * \see class DataRate
-        */
-        DataRate bps;
+    void SetDataRate(DataRate bps);
 
-        /**
-        * The interframe gap that the Net Device uses to throttle packet
-        * transmission
-        */
-        Time m_tInterframeGap;
-        Ptr<Node> m_node; //!< Node owning this NetDevice
-        Address m_address;   //!< Mac48Address of this NetDevice
-        Ptr<SatelliteChannel> m_channel;
-        bool m_linkUp;      //!< Identify if the link is up or not
-        Ptr<Packet> m_currentPkt; //!< Current packet processed
-        static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
+    /**
+    * \brief Dispose of the object
+    */
+    void DoDispose(void);
 
-        /**
-         * \brief The Maximum Transmission Unit
-         *
-         * This corresponds to the maximum
-         * number of bytes that can be transmitted as seen from higher layers.
-         * This corresponds to the 1500 byte MTU size often seen on IP over
-         * Ethernet.
-         */
-        uint32_t m_mtu;
+    bool StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol);
 
-        /**
-        * The Queue which this SatelliteNetDevice uses as a packet source.
-        * Management of this Queue has been delegated to the SatNetDevice
-        * and it has the responsibility for deletion.
-        * \see class DropTailQueue
-        */
-        Ptr<Queue<Packet>> m_queue;
+private:
 
-        ReceiveCallback m_forwardUp; //!< forward up callback
-
-        /**
-        * \brief Copy constructor
-        *
-        * The method is private, so it is DISABLED.
-        * \param o Other NetDevice
-        */
-        SatelliteNetDevice (const SatelliteNetDevice  &o);
-
-        /**
-        * \brief Assign operator
-        *
-        * The method is private, so it is DISABLED.
-        *
-        * \param o Other NetDevice
-        * \return New instance of the NetDevice
-        */
-        SatelliteNetDevice& operator= (const SatelliteNetDevice &o);
-
+    /**
+    * Enumeration of the states of the transmit machine of the net device.
+    */
+    enum TxMachineState {
+        READY,   /**< The transmitter is ready to begin transmission of a packet */
+        BUSY     /**< The transmitter is busy transmitting a packet */
     };
 
-}
+    bool RX();
+
+    bool TX();
+
+    bool ForwardUp();
+
+    /**
+    * The state of the Net Device transmit state machine.
+    * \see TxMachineState
+    */
+    TxMachineState m_txMachineState;
+
+    DataRate bps;
+
+    /**
+    * The interfrace gap that the Net Device uses to throttle packet
+    * transmission
+    */
+    Time m_tInterframeGap;
+    Ptr<Node> m_node; //!< Node owning this NetDevice
+    uint16_t m_protocol;
+    Address m_address;
+    Ptr<SatelliteChannel> m_channel;
+    bool m_linkUp;      //!< Identify if the link is up or not
+    Ptr<Packet> m_currentPkt; //!< Current packet processed
+    static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
+
+    /**
+     * \brief The Maximum Transmission Unit
+     *
+     * This corresponds to the maximum
+     * number of bytes that can be transmitted as seen from higher layers.
+     * This corresponds to the 1500 byte MTU size often seen on IP over
+     * Ethernet.
+     */
+    uint32_t m_mtu;
+
+    /**
+    * The Queue which this SatelliteNetDevice uses as a packet source.
+    * Management of this Queue has been delegated to the SatNetDevice
+    * and it has the responsibility for deletion.
+    * \see class DropTailQueue
+    */
+    Ptr<Queue<Packet>> m_queue;
+
+    ReceiveCallback m_forwardUp; //!< forward up callback
+
+    /**
+    * \brief Copy constructor
+    *
+    * The method is private, so it is DISABLED.
+    * \param o Other NetDevice
+    */
+    SatelliteNetDevice(const SatelliteNetDevice &o);
+
+    /**
+    * \brief Assign operator
+    *
+    * The method is private, so it is DISABLED.
+    *
+    * \param o Other NetDevice
+    * \return New instance of the NetDevice
+    */
+    SatelliteNetDevice &operator=(const SatelliteNetDevice &o);
+};
+
+} //ns3 namespace
 
 #endif //SAT_NETDEVICE_H

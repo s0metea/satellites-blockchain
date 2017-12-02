@@ -5,7 +5,6 @@
 #include <ns3/channel.h>
 #include <ns3/nstime.h>
 #include <ns3/propagation-delay-model.h>
-#include <ns3/satellite-net-device.h>
 
 namespace ns3 {
 
@@ -65,7 +64,7 @@ public:
         *\\param to
         *\\param sender
         */
-        void Send(Ptr<Packet> packet, uint16_t protocol, const Address &to, Ptr<NetDevice> sender);
+        void Send(Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender);
 
 private:
         SatelliteChannel (SatelliteChannel const &);

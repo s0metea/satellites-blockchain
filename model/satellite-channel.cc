@@ -1,8 +1,10 @@
-#include "satellite-channel.h"
 #include <ns3/simulator.h>
 #include <ns3/mobility-model.h>
 #include <ns3/pointer.h>
 #include <ns3/log.h>
+#include <ns3/udp-client-server-helper.h>
+#include <ns3/propagation-delay-model.h>
+#include <ns3/satellite-net-device.h>
 
 namespace ns3 {
 
@@ -38,6 +40,7 @@ namespace ns3 {
 
     void
     SatelliteChannel::Add(Ptr<SatelliteNetDevice> device) {
+        device->SetChannel(this);
         netDeviceList.push_back(device);
     }
 
@@ -51,27 +54,19 @@ namespace ns3 {
         m_delay = delay;
     }
 
-
-    void SatelliteChannel::Send(Ptr<Packet> packet, uint16_t protocol, const Address &to, Ptr<NetDevice> sender) {
+    void
+    SatelliteChannel::Send(Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender) {
         NS_LOG_FUNCTION (this << packet << sender);
-        NS_LOG_LOGIC ("UID is " << packet->GetUid() << ")");
+        NS_LOG_LOGIC ("UID is " << packet->GetUid());
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
         NS_ASSERT (senderMobility != nullptr);
-
-        for (auto i = netDeviceList.begin(); i != netDeviceList.end(); i++) {
-            if (sender != (*i)) {
-                Ptr<MobilityModel> receiverMobility = (*i)->GetNode()->GetObject<MobilityModel>();
+        for (auto netDevice = netDeviceList.begin(); netDevice != netDeviceList.end(); netDevice++) {
+            if (sender->GetAddress() != (*netDevice)->GetAddress()) {
+                Ptr<MobilityModel> receiverMobility = (*netDevice)->GetNode()->GetObject<MobilityModel>();
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
                 NS_LOG_DEBUG ("Propagation Delay =" << senderMobility->GetDistanceFrom(receiverMobility) << "m, delay="
                                                     << delay);
-                Ptr<SatelliteNetDevice> dstNetDevice = *i;
-                u_int32_t dstNode;
-                if (dstNetDevice == nullptr) {
-                    dstNode = 0xffffffff;
-                } else {
-                    dstNode = dstNetDevice->GetNode()->GetId();
-                }
-                Simulator::ScheduleWithContext(dstNode, delay, &SatelliteNetDevice::Receive, this, dstNetDevice, packet->Copy(), protocol, to);
+                Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX, (*netDevice), packet, to, protocol);
             }
         }
     }

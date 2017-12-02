@@ -15,9 +15,7 @@ def build(bld):
         ]
 
     module_test = bld.create_ns3_module_test_library('satellites-blockchain')
-    module_test.source = [
-        'test/satellites-blockchain-test-suite.cc',
-        ]
+    module_test.source = []
 
     headers = bld(features='ns3header')
     headers.module = 'satellites-blockchain'
