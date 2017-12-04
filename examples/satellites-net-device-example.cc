@@ -12,7 +12,7 @@ namespace ns3 {
 
     NS_LOG_COMPONENT_DEFINE("ns3::SatellitesExample");
 
-    void main(int argc, char *argv[]) {
+    int main(int argc, char *argv[]) {
 
         NS_LOG_INFO ("Objects creation");
         Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
@@ -74,5 +74,6 @@ namespace ns3 {
         Simulator::Run ();
         Simulator::Destroy ();
         NS_LOG_INFO ("Done.");
+        return 0;
     }
 }
