@@ -66,7 +66,7 @@ namespace ns3 {
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
                 NS_LOG_DEBUG ("Propagation Delay =" << senderMobility->GetDistanceFrom(receiverMobility) << "m, delay="
                                                     << delay);
-                Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX, (*netDevice), packet, to, protocol);
+                Simulator::Schedule(delay, &SatelliteNetDevice::StartRX, (*netDevice), packet->Copy(), to, protocol);
             }
         }
     }

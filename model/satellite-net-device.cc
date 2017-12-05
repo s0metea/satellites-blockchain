@@ -2,6 +2,8 @@
 #include <ns3/network-module.h>
 #include <ns3/pointer.h>
 
+using namespace std;
+
 namespace ns3 {
 
     NS_LOG_COMPONENT_DEFINE ("ns3::SatelliteNetDevice");
@@ -115,7 +117,7 @@ namespace ns3 {
     void
     SatelliteNetDevice::SetPromiscReceiveCallback(NetDevice::PromiscReceiveCallback cb)
     {
-
+        return;
     }
 
     Address
@@ -146,7 +148,6 @@ namespace ns3 {
     SatelliteNetDevice::SetNode(Ptr<Node> node)
     {
         m_node = node;
-        node->AddDevice(this);
     }
 
     Ptr<Node>
@@ -159,65 +160,55 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet);
-        NS_ASSERT_MSG (m_txMachineState == BUSY, "Must be BUSY if transmitting");
-        m_txMachineState = READY;
+        cout << "Send call" << m_txMachineState;
+        cout << "!!!!!!!!!";
+
+        NS_LOG_FUNCTION (this << packet << m_txMachineState);
         m_currentPkt = packet;
         m_address = dst;
         m_protocol = protocol;
+        cout << "!!!!!!!!!";
         m_queue->Enqueue(packet);
+
         Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
-        NS_LOG_INFO ("m_tInterframeGap: " << m_tInterframeGap);
         NS_LOG_INFO ("TX time: " << txTime);
         Time totalTime = txTime + m_tInterframeGap;
-        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::TX, this);
+        if(m_txMachineState == READY)
+            cout << "First schedule to send";
+            Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         return true;
     }
 
     bool
     SatelliteNetDevice::TX() {
         NS_LOG_FUNCTION (this);
-        NS_ASSERT_MSG (m_txMachineState == READY, "Must be READY to transmit");
         m_txMachineState = BUSY;
-        Time totalTime = m_tInterframeGap;
         if(m_queue->GetNPackets() > 0) {
-            this->m_channel->Send(m_queue->Dequeue(), m_protocol, m_address, this);
+            m_currentPkt = m_queue->Dequeue();
+            Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
+            this->m_channel->Send(m_currentPkt, m_protocol, m_address, this);
+            Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
+        } else
             m_currentPkt = nullptr;
-            totalTime += bps.CalculateBytesTxTime (m_currentPkt->GetSize());
-            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::TX, this);
-            return true;
-        }
-        return false;
+        m_txMachineState = READY;
+        return true;
     }
 
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol)
     {
         NS_LOG_FUNCTION (this << packet);
-        Time totalTime = m_tInterframeGap;
-        if(m_queue->GetNPackets() > 0) {
-            totalTime += bps.CalculateBytesTxTime (packet->GetSize());
-            m_queue->Enqueue(packet);
-            m_currentPkt = packet;
-            m_address = src;
-            m_protocol = protocol;
-            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
-            return true;
-        }
-        return false;
+        Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
+        m_currentPkt = packet;
+        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
+        return true;
     }
 
     bool SatelliteNetDevice::RX() {
         NS_LOG_FUNCTION (this);
-        Time totalTime = m_tInterframeGap;
-        if(m_queue->GetNPackets() > 0) {
-            m_currentPkt = m_queue->Dequeue();
-            totalTime += bps.CalculateBytesTxTime (m_currentPkt->GetSize());
-            Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
-            return true;
-        }
+        Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize());
         Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::ForwardUp, this);
-        return false;
+        return true;
     }
 
     bool SatelliteNetDevice::ForwardUp() {

@@ -1,6 +1,6 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-    obj = bld.create_ns3_program('satellites-blockchain',
-    ['core', 'network', 'internet', 'udp-client-helper' 'mobility'])
+    obj = bld.create_ns3_program('satellites-net-device-example',
+    ['core', 'network', 'internet', 'mobility', 'satellites-blockchain', 'applications', 'propagation'])
     obj.source = 'satellites-net-device-example.cc'
