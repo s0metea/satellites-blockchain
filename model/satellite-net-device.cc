@@ -160,16 +160,11 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        cout << "Send call" << m_txMachineState;
-        cout << "!!!!!!!!!";
-
         NS_LOG_FUNCTION (this << packet << m_txMachineState);
         m_currentPkt = packet;
         m_address = dst;
         m_protocol = protocol;
-        cout << "!!!!!!!!!";
         m_queue->Enqueue(packet);
-
         Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
         NS_LOG_INFO ("TX time: " << txTime);
         Time totalTime = txTime + m_tInterframeGap;
