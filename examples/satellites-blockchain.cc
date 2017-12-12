@@ -47,13 +47,6 @@ vector<vector<vector<bool>>> loadLinks(string filename){
     return links;
 }
 
-static Ptr<SatelliteNetDevice> CreateSimpleDevice (Ptr<Node> node)
-{
-    //Ptr<OpticalNetDevice> device = CreateObject<OpticalNetDevice> ();
-    //device->SetAddress(Mac48Address::Allocate());
-    //node->AddDevice(device);
-    return NULL;
-}
 
 
 static void CourseChange (std::ostream *os, std::string foo, Ptr<const MobilityModel> mobility) {

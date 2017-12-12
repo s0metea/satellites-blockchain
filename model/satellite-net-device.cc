@@ -1,6 +1,7 @@
 #include "satellite-net-device.h"
 #include <ns3/network-module.h>
 #include <ns3/pointer.h>
+#include <ns3/drop-tail-queue.h>
 
 using namespace std;
 
@@ -44,6 +45,8 @@ namespace ns3 {
             m_channel (nullptr),
             m_linkUp (false),
             m_currentPkt (nullptr) {
+        NS_LOG_FUNCTION (this);
+        m_queue = CreateObject<DropTailQueue<Packet> >();
     }
 
     SatelliteNetDevice::~SatelliteNetDevice()
@@ -160,6 +163,7 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
+        cout << "Sending...";
         NS_LOG_FUNCTION (this << packet << m_txMachineState);
         m_currentPkt = packet;
         m_address = dst;
@@ -168,6 +172,7 @@ namespace ns3 {
         Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
         NS_LOG_INFO ("TX time: " << txTime);
         Time totalTime = txTime + m_tInterframeGap;
+        cout << "!!!";
         if(m_txMachineState == READY)
             cout << "First schedule to send";
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
@@ -195,14 +200,14 @@ namespace ns3 {
         NS_LOG_FUNCTION (this << packet);
         Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
         m_currentPkt = packet;
-        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::RX, this);
+        Simulator::Schedule(totalTime, &SatelliteNetDevice::RX, this);
         return true;
     }
 
     bool SatelliteNetDevice::RX() {
         NS_LOG_FUNCTION (this);
         Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize());
-        Simulator::ScheduleWithContext(this->GetNode()->GetId(), totalTime, &SatelliteNetDevice::ForwardUp, this);
+        Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this);
         return true;
     }
 

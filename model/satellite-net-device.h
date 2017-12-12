@@ -3,13 +3,12 @@
 
 #include <ns3/data-rate.h>
 #include <ns3/satellite-channel.h>
-#include "ns3/queue.h"
 #include "ns3/net-device.h"
 
 
 namespace ns3 {
 
-template <typename Item> class Queue;
+template <typename Item> class DropTailQueue;
 class NetDevice;
 
 class SatelliteNetDevice: public NetDevice {
@@ -137,7 +136,7 @@ private:
     * and it has the responsibility for deletion.
     * \see class DropTailQueue
     */
-    Ptr<Queue<Packet>> m_queue;
+    Ptr<DropTailQueue<Packet>> m_queue;
 
     ReceiveCallback m_forwardUp; //!< forward up callback
 

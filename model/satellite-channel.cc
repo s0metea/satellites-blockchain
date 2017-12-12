@@ -26,6 +26,7 @@ namespace ns3 {
     }
 
     SatelliteChannel::SatelliteChannel() {
+        NS_LOG_FUNCTION (this);
     }
 
     SatelliteChannel::~SatelliteChannel() {
@@ -40,7 +41,7 @@ namespace ns3 {
 
     void
     SatelliteChannel::Add(Ptr<SatelliteNetDevice> device) {
-        device->SetChannel(this);
+        NS_LOG_FUNCTION (this);
         netDeviceList.push_back(device);
     }
 
