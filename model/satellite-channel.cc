@@ -16,12 +16,14 @@ namespace ns3 {
     SatelliteChannel::GetTypeId() {
         static TypeId tid = TypeId("ns3::SatelliteChannel")
                 .SetParent<Channel>()
-                .SetGroupName("Channel")
+                .SetGroupName("Channel");
+#if 0
                 .AddAttribute("PropagationDelayModel",
                               "A pointer to the propagation delay model attached to this channel.",
                               PointerValue(),
                               MakePointerAccessor(&SatelliteChannel::m_delay),
                               MakePointerChecker<PropagationDelayModel>());
+#endif
         return tid;
     }
 
@@ -60,14 +62,17 @@ namespace ns3 {
         NS_LOG_FUNCTION (this << packet << sender);
         NS_LOG_LOGIC ("UID is " << packet->GetUid());
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
-        NS_ASSERT (senderMobility != nullptr);
+        NS_ASSERT (senderMobility != 0);
+        NS_ASSERT(m_delay);
         for (auto netDevice = netDeviceList.begin(); netDevice != netDeviceList.end(); netDevice++) {
             if (sender->GetAddress() != (*netDevice)->GetAddress()) {
+                NS_ASSERT((*netDevice)->GetNode() != 0);
                 Ptr<MobilityModel> receiverMobility = (*netDevice)->GetNode()->GetObject<MobilityModel>();
+                NS_ASSERT(receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
                 NS_LOG_DEBUG ("Propagation Delay =" << senderMobility->GetDistanceFrom(receiverMobility) << "m, delay="
                                                     << delay);
-                Simulator::Schedule(delay, &SatelliteNetDevice::StartRX, (*netDevice), packet->Copy(), to, protocol);
+                Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX, (*netDevice), packet->Copy(), to, protocol);
             }
         }
     }

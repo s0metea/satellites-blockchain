@@ -33,7 +33,7 @@ public:
 
     void SetChannel(Ptr<SatelliteChannel> channel);
 
-    Ptr<Channel> GetChannel(void) const override;
+    Ptr<Channel> GetChannel(void) const;
 
     void SetAddress(Address address);
 
@@ -59,9 +59,9 @@ public:
 
     bool IsBridge(void) const;
 
-    bool Send(Ptr<Packet> packet, const Address &to, uint16_t protocol) override;
+    bool Send(Ptr<Packet> packet, const Address &to, uint16_t protocol);
 
-    bool SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber) override;
+    bool SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber);
 
     Ptr<Node> GetNode(void) const;
     void SetNode(Ptr<Node> node);

@@ -5,7 +5,6 @@
 #include <ns3/satellite-channel.h>
 #include <ns3/satellite-net-device.h>
 #include <ns3/mobility-module.h>
-#include <ns3/point-to-point-helper.h>
 #include <ns3/udp-echo-helper.h>
 
 using namespace ns3;
@@ -77,15 +76,9 @@ main(int argc, char *argv[]) {
     clientApps.Stop (Seconds (10.0));
 
     MobilityHelper mobility;
-    mobility.SetMobilityModel("ns3::RandomWalk2dMobilityModel",
-                              "Mode",
-                              StringValue ("Time"),
-                              "Time", StringValue ("2s"),
-                              "Speed",
-                              StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"),
-                              "Bounds", RectangleValue (Rectangle (0.0, 20.0, 0.0, 20.0)));
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel"),
     mobility.Install(nodes);
-
+    std::cout << "RUN" << std::endl;
     Simulator::Run ();
     Simulator::Destroy ();
 	NS_LOG_INFO ("Done.");
