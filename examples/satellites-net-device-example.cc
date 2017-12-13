@@ -50,10 +50,12 @@ main(int argc, char *argv[]) {
     NetDeviceContainer netDevices;
     client->AddDevice(clientNetDevice);
     server->AddDevice(serverNetDevice);
+
     clientNetDevice->SetChannel(channel);
     serverNetDevice->SetChannel(channel);
+
     clientNetDevice->SetDataRate(DataRate ("10MB/s"));
-    clientNetDevice->SetDataRate(DataRate ("10MB/s"));
+    serverNetDevice->SetDataRate(DataRate ("10MB/s"));
 
     netDevices.Add(clientNetDevice);
 	netDevices.Add(serverNetDevice);
@@ -63,7 +65,8 @@ main(int argc, char *argv[]) {
     m_propagationDelay.SetTypeId("ns3::ConstantSpeedPropagationDelayModel");
     Ptr<PropagationDelayModel> delay = m_propagationDelay.Create<PropagationDelayModel> ();
     channel->SetPropagationDelay (delay);
-	channel->Add(clientNetDevice);
+
+    channel->Add(clientNetDevice);
     channel->Add(serverNetDevice);
 
 
@@ -80,8 +83,8 @@ main(int argc, char *argv[]) {
     // Set the amount of data to send in bytes.  Zero is unlimited.
     source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
     ApplicationContainer sourceApps = source.Install (nodes.Get (0));
-    sourceApps.Start (Seconds (0.0));
-    sourceApps.Stop (Seconds (10.0));
+    sourceApps.Start (Seconds (1.0));
+    sourceApps.Stop (Seconds (9.0));
 
 
     PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny(), port));
@@ -98,7 +101,6 @@ main(int argc, char *argv[]) {
     Ptr<FlowMonitor> flowMonitor;
     FlowMonitorHelper flowHelper;
     flowMonitor = flowHelper.InstallAll();
-    Simulator::Stop (Seconds (10));
 
     std::cout << "RUN" << std::endl;
     Simulator::Run ();
@@ -116,13 +118,13 @@ main(int argc, char *argv[]) {
         //   Simulator::Stops at "second 10".
 
             Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-            std::cout << "Flow " << i->first - 2 << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
+            std::cout << "Flow " << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
             std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
             std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-            std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+            //std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
             std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
             std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-            std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+            //std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
     }
 
 

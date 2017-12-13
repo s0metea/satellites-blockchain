@@ -22,11 +22,11 @@ namespace ns3 {
                                DataRateValue (DataRate ("1250MB/s")),
                                MakeDataRateAccessor (&SatelliteNetDevice::bps),
                                MakeDataRateChecker ())
-                .AddAttribute ("Address",
-                               "The MAC address of this device.",
-                               AddressValue (Mac48Address::Allocate()),
-                               MakeAddressAccessor (&SatelliteNetDevice::m_address),
-                               MakeAddressChecker ())
+//                .AddAttribute ("Address",
+//                               "The MAC address of this device.",
+//                               AddressValue (Mac48Address::Allocate()),
+//                               MakeAddressAccessor (&SatelliteNetDevice::m_address),
+//                               MakeAddressChecker ())
                 .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
                                UintegerValue (DEFAULT_MTU),
                                MakeUintegerAccessor (&SatelliteNetDevice::SetMtu,
@@ -47,6 +47,8 @@ namespace ns3 {
             m_currentPkt (nullptr) {
         NS_LOG_FUNCTION (this);
         m_queue = CreateObject<DropTailQueue<Packet> >();
+        m_address = Mac48Address::Allocate ();
+        cout << this << "MAC Address: " << m_address << endl;
         m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
     }
 
@@ -96,7 +98,7 @@ namespace ns3 {
     void
     SatelliteNetDevice::SetAddress(Address address) {
         m_address = Mac48Address::ConvertFrom(address);
-        NS_LOG_FUNCTION (this << m_address);
+        cout << "MAC Address was set: " << m_address << endl;
     }
 
     Address
@@ -164,7 +166,7 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet << m_txMachineState << m_address << dst << protocol);
+        NS_LOG_FUNCTION (this << packet << m_txMachineState << m_address << dst << protocol << packet->GetUid());
         m_currentPkt = packet;
         m_protocol = protocol;
 
@@ -196,8 +198,10 @@ namespace ns3 {
         m_txMachineState = BUSY;
         if(m_queue->GetNPackets() > 0) {
             m_currentPkt = m_queue->Dequeue();
+            EthernetHeader ethernetHeader;
+            m_currentPkt->PeekHeader(ethernetHeader);
             Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
-            this->m_channel->Send(m_currentPkt, m_protocol, m_address, this);
+            this->m_channel->Send(m_currentPkt, m_protocol, ethernetHeader.GetDestination(), this);
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         } else
             m_currentPkt = nullptr;
@@ -209,6 +213,7 @@ namespace ns3 {
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol)
     {
         NS_LOG_FUNCTION (this << packet << protocol);
+        m_protocol = protocol;
         Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
         m_currentPkt = packet;
         Simulator::Schedule(totalTime, &SatelliteNetDevice::RX, this);
@@ -223,16 +228,20 @@ namespace ns3 {
     }
 
     bool SatelliteNetDevice::ForwardUp() {
-        std::stringstream sstream;
-        sstream << std::hex << m_protocol;
-        std::string hexProtocol = sstream.str();
-        NS_LOG_FUNCTION (this << hexProtocol << m_address);
+        NS_LOG_FUNCTION (this << m_protocol << m_address);
+
         EthernetHeader eh;
-        m_currentPkt->RemoveHeader(eh);
         LlcSnapHeader llc;
-        m_currentPkt->RemoveHeader(llc);
-        NS_ASSERT(m_forwardUp.IsNull());
-        m_forwardUp (this, m_currentPkt->Copy(), llc.GetType(), Mac48Address::ConvertFrom(m_address));
+
+        m_currentPkt->PeekHeader(eh);
+        m_currentPkt->PeekHeader(llc);
+        Mac48Address from = eh.GetSource();
+        //m_currentPkt->RemoveHeader(eh);
+       // m_currentPkt->RemoveHeader(llc);
+        NS_ASSERT(!m_forwardUp.IsNull());
+
+        std::cout << "Protocol number at RX: " << llc.GetType() << std::endl;
+        m_forwardUp (this, m_currentPkt->Copy(), llc.GetType(), from);
         return true;
     }
 
