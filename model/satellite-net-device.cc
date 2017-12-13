@@ -236,11 +236,11 @@ namespace ns3 {
         m_currentPkt->PeekHeader(eh);
         m_currentPkt->PeekHeader(llc);
         Mac48Address from = eh.GetSource();
-        //m_currentPkt->RemoveHeader(eh);
-       // m_currentPkt->RemoveHeader(llc);
+        m_currentPkt->RemoveHeader(eh);
+        m_currentPkt->RemoveHeader(llc);
         NS_ASSERT(!m_forwardUp.IsNull());
 
-        std::cout << "Protocol number at RX: " << llc.GetType() << std::endl;
+        std::cout << "Protocol number at RX: " << llc.GetType() << " from: " << from << endl;
         m_forwardUp (this, m_currentPkt->Copy(), llc.GetType(), from);
         return true;
     }
