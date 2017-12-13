@@ -5,7 +5,10 @@
 #include <ns3/satellite-channel.h>
 #include <ns3/satellite-net-device.h>
 #include <ns3/mobility-module.h>
-#include <ns3/udp-echo-helper.h>
+#include <ns3/bulk-send-helper.h>
+#include <ns3/packet-sink.h>
+#include <ns3/packet-sink-helper.h>
+#include "ns3/flow-monitor-module.h"
 
 using namespace ns3;
 using namespace std;
@@ -16,22 +19,22 @@ uint32_t satellites_amount = 0;
 uint32_t ground_stations_amount = 0;
 unsigned int    nodeNum = 0;
 string mobilityTracePath;
+uint32_t maxBytes = 0;
 
 int 
 main(int argc, char *argv[]) {
     CommandLine cmd;
     cmd.AddValue ("tracePath", "Path to the NS2Mobility trace file", mobilityTracePath);
+    cmd.AddValue ("maxBytes", "Total number of bytes for application to send", maxBytes);
     cmd.Parse (argc,argv);
 
-    Time::SetResolution (Time::S);
+    Time::SetResolution (Time::NS);
     LogComponentEnable ("UdpEchoClientApplication", LOG_ALL);
     LogComponentEnable ("UdpEchoServerApplication", LOG_ALL);
     LogComponentEnable ("ns3::SatelliteNetDevice", LOG_ALL);
     LogComponentEnable ("ns3::SatelliteChannel", LOG_ALL);
     LogComponentEnable ("ns3::SatellitesExample", LOG_ALL);
     LogComponentEnable ("Ns2MobilityHelper", LOG_ALL);
-
-    NS_LOG_INFO (mobilityTracePath);
 
 	NS_LOG_INFO ("Objects creation");
 	Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
@@ -49,7 +52,10 @@ main(int argc, char *argv[]) {
     server->AddDevice(serverNetDevice);
     clientNetDevice->SetChannel(channel);
     serverNetDevice->SetChannel(channel);
-	netDevices.Add(clientNetDevice);
+    clientNetDevice->SetDataRate(DataRate ("10MB/s"));
+    clientNetDevice->SetDataRate(DataRate ("10MB/s"));
+
+    netDevices.Add(clientNetDevice);
 	netDevices.Add(serverNetDevice);
 
 	NS_LOG_INFO ("Channel setup");
@@ -69,20 +75,19 @@ main(int argc, char *argv[]) {
 
     Ipv4InterfaceContainer interfaces = address.Assign (netDevices);
 
-    UdpEchoServerHelper echoServer (9);
+    uint16_t port = 9;
+    BulkSendHelper source ("ns3::TcpSocketFactory", InetSocketAddress (interfaces.GetAddress (1), port));
+    // Set the amount of data to send in bytes.  Zero is unlimited.
+    source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
+    ApplicationContainer sourceApps = source.Install (nodes.Get (0));
+    sourceApps.Start (Seconds (0.0));
+    sourceApps.Stop (Seconds (10.0));
 
-    ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
-    serverApps.Start (Seconds (1.0));
-    serverApps.Stop (Seconds (100.0));
 
-    UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
-    echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-    echoClient.SetAttribute ("Interval", TimeValue (Seconds (10.0)));
-    echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
-
-    ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
-    clientApps.Start (Seconds (2.0));
-    clientApps.Stop (Seconds (90.0));
+    PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny(), port));
+    ApplicationContainer sinkApps = sink.Install (nodes.Get (1));
+    sinkApps.Start (Seconds (0.0));
+    sinkApps.Stop (Seconds (10.0));
 
     //MobilityHelper mobility;
     //mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
@@ -90,9 +95,37 @@ main(int argc, char *argv[]) {
     ns2.Install (); // configure movements for each node, while reading trace file
 
     //mobility.Install(nodes);
+    Ptr<FlowMonitor> flowMonitor;
+    FlowMonitorHelper flowHelper;
+    flowMonitor = flowHelper.InstallAll();
+    Simulator::Stop (Seconds (10));
 
     std::cout << "RUN" << std::endl;
     Simulator::Run ();
+
+    flowMonitor->CheckForLostPackets ();
+    Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowHelper.GetClassifier ());
+    FlowMonitor::FlowStatsContainer stats = flowMonitor->GetFlowStats ();
+    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
+    {
+        // first 2 FlowIds are for ECHO apps, we don't want to display them
+        //
+        // Duration for throughput measurement is 9.0 seconds, since
+        //   StartTime of the OnOffApplication is at about "second 1"
+        // and
+        //   Simulator::Stops at "second 10".
+
+            Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
+            std::cout << "Flow " << i->first - 2 << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
+            std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
+            std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
+            std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+            std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
+            std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
+            std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+    }
+
+
     Simulator::Destroy ();
 	NS_LOG_INFO ("Done.");
 	return 0;

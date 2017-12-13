@@ -163,9 +163,8 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet << m_txMachineState);
+        NS_LOG_FUNCTION (this << packet << m_txMachineState << m_address << dst << protocol);
         m_currentPkt = packet;
-        m_address = dst;
         m_protocol = protocol;
 
         //LLCHeader:
@@ -176,6 +175,8 @@ namespace ns3 {
         //EthernetHeader:
         EthernetHeader ethernetHeader;
         ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dst));
+        ethernetHeader.SetSource(Mac48Address::ConvertFrom(m_address));
+
         packet->AddHeader (ethernetHeader);
 
         m_queue->Enqueue(packet);
@@ -206,7 +207,7 @@ namespace ns3 {
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet);
+        NS_LOG_FUNCTION (this << packet << protocol);
         Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
         m_currentPkt = packet;
         Simulator::Schedule(totalTime, &SatelliteNetDevice::RX, this);
@@ -221,7 +222,17 @@ namespace ns3 {
     }
 
     bool SatelliteNetDevice::ForwardUp() {
-        m_forwardUp (this, m_currentPkt, m_protocol, m_address);
+        std::stringstream sstream;
+        sstream << std::hex << m_protocol;
+        std::string hexProtocol = sstream.str();
+        NS_LOG_FUNCTION (this << hexProtocol << m_address);
+        EthernetHeader eh;
+        m_currentPkt->RemoveHeader(eh);
+        LlcSnapHeader llc;
+        m_currentPkt->RemoveHeader(llc);
+        NS_ASSERT(!m_forwardUp.IsNull());
+
+        m_forwardUp (this, m_currentPkt, llc.GetType(), Mac48Address::ConvertFrom(m_address));
         return true;
     }
 
