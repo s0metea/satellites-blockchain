@@ -163,18 +163,27 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        cout << "Sending...";
         NS_LOG_FUNCTION (this << packet << m_txMachineState);
         m_currentPkt = packet;
         m_address = dst;
         m_protocol = protocol;
+
+        //LLCHeader:
+        LlcSnapHeader llc;
+        llc.SetType (protocol);
+        packet->AddHeader (llc);
+
+        //EthernetHeader:
+        EthernetHeader ethernetHeader;
+        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dst));
+        packet->AddHeader (ethernetHeader);
+
         m_queue->Enqueue(packet);
         Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
         NS_LOG_INFO ("TX time: " << txTime);
         Time totalTime = txTime + m_tInterframeGap;
-        cout << "!!!";
+
         if(m_txMachineState == READY)
-            cout << "First schedule to send";
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         return true;
     }

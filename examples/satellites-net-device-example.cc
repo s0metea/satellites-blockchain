@@ -48,6 +48,11 @@ main(int argc, char *argv[]) {
 	netDevices.Add(serverNetDevice);
 
 	NS_LOG_INFO ("Channel setup");
+    ObjectFactory m_propagationDelay;
+    m_propagationDelay.SetTypeId("ns3::ConstantSpeedPropagationDelayModel");
+    Ptr<PropagationDelayModel> delay = m_propagationDelay.Create<PropagationDelayModel> ();
+    cout << delay->IsInitialized();
+    channel->SetPropagationDelay (delay);
 	channel->Add(clientNetDevice);
     channel->Add(serverNetDevice);
 
@@ -64,16 +69,16 @@ main(int argc, char *argv[]) {
 
     ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
     serverApps.Start (Seconds (1.0));
-    serverApps.Stop (Seconds (10.0));
+    serverApps.Stop (Seconds (100.0));
 
     UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
-    echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
+    echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
     echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
     echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
     ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
     clientApps.Start (Seconds (2.0));
-    clientApps.Stop (Seconds (10.0));
+    clientApps.Stop (Seconds (90.0));
 
     MobilityHelper mobility;
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel"),
