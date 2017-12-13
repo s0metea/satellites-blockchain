@@ -5,6 +5,9 @@
 #include <ns3/udp-client-server-helper.h>
 #include <ns3/propagation-delay-model.h>
 #include <ns3/satellite-net-device.h>
+#include <iostream>
+
+using namespace std;
 
 namespace ns3 {
 
@@ -70,8 +73,10 @@ namespace ns3 {
                 Ptr<MobilityModel> receiverMobility = (*netDevice)->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT(receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
-                NS_LOG_DEBUG ("Propagation Delay =" << senderMobility->GetDistanceFrom(receiverMobility) << "m, delay="
-                                                    << delay);
+                NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode()->GetId()
+                                                       << " --> Node" << (*netDevice)->GetNode()->GetId()
+                                                       << " = " << delay << endl);
+                NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility) << endl);
                 Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX, (*netDevice), packet->Copy(), to, protocol);
             }
         }

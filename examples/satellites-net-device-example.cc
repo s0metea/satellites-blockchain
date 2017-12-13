@@ -15,10 +15,13 @@ NS_LOG_COMPONENT_DEFINE("ns3::SatellitesExample");
 uint32_t satellites_amount = 0;
 uint32_t ground_stations_amount = 0;
 unsigned int    nodeNum = 0;
-double duration;
+string mobilityTracePath;
 
 int 
 main(int argc, char *argv[]) {
+    CommandLine cmd;
+    cmd.AddValue ("tracePath", "Path to the NS2Mobility trace file", mobilityTracePath);
+    cmd.Parse (argc,argv);
 
     Time::SetResolution (Time::S);
     LogComponentEnable ("UdpEchoClientApplication", LOG_ALL);
@@ -27,6 +30,8 @@ main(int argc, char *argv[]) {
     LogComponentEnable ("ns3::SatelliteChannel", LOG_ALL);
     LogComponentEnable ("ns3::SatellitesExample", LOG_ALL);
     LogComponentEnable ("Ns2MobilityHelper", LOG_ALL);
+
+    NS_LOG_INFO (mobilityTracePath);
 
 	NS_LOG_INFO ("Objects creation");
 	Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
@@ -51,7 +56,6 @@ main(int argc, char *argv[]) {
     ObjectFactory m_propagationDelay;
     m_propagationDelay.SetTypeId("ns3::ConstantSpeedPropagationDelayModel");
     Ptr<PropagationDelayModel> delay = m_propagationDelay.Create<PropagationDelayModel> ();
-    cout << delay->IsInitialized();
     channel->SetPropagationDelay (delay);
 	channel->Add(clientNetDevice);
     channel->Add(serverNetDevice);
@@ -72,17 +76,21 @@ main(int argc, char *argv[]) {
     serverApps.Stop (Seconds (100.0));
 
     UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
-    echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
-    echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+    echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
+    echoClient.SetAttribute ("Interval", TimeValue (Seconds (10.0)));
     echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
     ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
     clientApps.Start (Seconds (2.0));
     clientApps.Stop (Seconds (90.0));
 
-    MobilityHelper mobility;
-    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel"),
-    mobility.Install(nodes);
+    //MobilityHelper mobility;
+    //mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+    Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
+    ns2.Install (); // configure movements for each node, while reading trace file
+
+    //mobility.Install(nodes);
+
     std::cout << "RUN" << std::endl;
     Simulator::Run ();
     Simulator::Destroy ();
