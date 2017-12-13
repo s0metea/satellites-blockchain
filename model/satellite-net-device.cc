@@ -47,6 +47,7 @@ namespace ns3 {
             m_currentPkt (nullptr) {
         NS_LOG_FUNCTION (this);
         m_queue = CreateObject<DropTailQueue<Packet> >();
+        m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
     }
 
     SatelliteNetDevice::~SatelliteNetDevice()
@@ -230,9 +231,8 @@ namespace ns3 {
         m_currentPkt->RemoveHeader(eh);
         LlcSnapHeader llc;
         m_currentPkt->RemoveHeader(llc);
-        NS_ASSERT(!m_forwardUp.IsNull());
-
-        m_forwardUp (this, m_currentPkt, llc.GetType(), Mac48Address::ConvertFrom(m_address));
+        NS_ASSERT(m_forwardUp.IsNull());
+        m_forwardUp (this, m_currentPkt->Copy(), llc.GetType(), Mac48Address::ConvertFrom(m_address));
         return true;
     }
 

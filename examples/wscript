@@ -2,5 +2,5 @@
 
 def build(bld):
     obj = bld.create_ns3_program('satellites-net-device-example',
-    ['core', 'network', 'internet', 'mobility', 'satellites-blockchain', 'applications', 'propagation'])
+    ['core', 'network', 'internet', 'mobility', 'flow-monitor', 'satellites-blockchain', 'applications', 'propagation'])
     obj.source = 'satellites-net-device-example.cc'
