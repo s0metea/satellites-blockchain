@@ -14,9 +14,10 @@ class NetDevice;
 class SatelliteNetDevice: public NetDevice {
 
 public:
-    const Time &getM_tInterframeGap() const;
 
-    void setM_tInterframeGap(const Time &m_tInterframeGap);
+    void SetInterframeGap(Time &m_tInterframeGap);
+
+    Time GetInterframeGap();
 
     /**
     * \brief Get the TypeId
@@ -113,6 +114,7 @@ private:
     * transmission
     */
     Time m_InterframeGap;
+    Ptr<Packet> m_currentTxPacket;
     Ptr<Node> m_node; //!< Node owning this NetDevice
     uint16_t m_protocol;
     Address m_address;

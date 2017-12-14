@@ -58,6 +58,10 @@ main(int argc, char *argv[]) {
     clientNetDevice->SetDataRate(DataRate ("100MB/s"));
     serverNetDevice->SetDataRate(DataRate ("100MB/s"));
 
+    Time time(0);
+    clientNetDevice->SetInterframeGap(time);
+    serverNetDevice->SetInterframeGap(time);
+
     netDevices.Add(clientNetDevice);
 	netDevices.Add(serverNetDevice);
 
@@ -101,7 +105,7 @@ main(int argc, char *argv[]) {
     flowMonitor = flowHelper.InstallAll();
 
     std::cout << "RUN" << std::endl;
-    Simulator::Stop(Seconds(200));
+    Simulator::Stop(Seconds(210));
     Simulator::Run ();
 
     flowMonitor->CheckForLostPackets ();
@@ -109,20 +113,14 @@ main(int argc, char *argv[]) {
     FlowMonitor::FlowStatsContainer stats = flowMonitor->GetFlowStats ();
     for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
-        // first 2 FlowIds are for ECHO apps, we don't want to display them
-        //
-        // Duration for throughput measurement is 9.0 seconds, since
-        //   StartTime of the OnOffApplication is at about "second 1"
-        // and
-        //   Simulator::Stops at "second 10".
-
             Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
             std::cout << "Flow " << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
             std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
             std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
             std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
             std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-            std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 200 / 1000 / 1000  << " Mbps\n";
+            std::cout << "  Throughput RX: " << i->second.rxBytes * 8 / 1024 / 200 << " Megabits/s\n";
+            std::cout << "  Throughput TX: " << i->second.txBytes * 8 / 1024 / 200 << " Megabits/s\n";
     }
 
 

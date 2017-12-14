@@ -181,12 +181,16 @@ namespace ns3 {
         packet->AddHeader (ethernetHeader);
 
         m_queue->Enqueue(packet);
-        Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
-        NS_LOG_INFO ("TX time: " << txTime);
-        Time totalTime = txTime + m_InterframeGap;
 
-        if(m_txMachineState == READY)
+        if(m_txMachineState == READY) {
+            TX();
+        }
+        else {
+            Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
+            Time totalTime = txTime + m_InterframeGap;
+            NS_LOG_INFO ("TX time: " << txTime);
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
+        }
         return true;
     }
 
@@ -196,6 +200,7 @@ namespace ns3 {
         m_txMachineState = BUSY;
         if(m_queue->GetNPackets() > 0) {
             Ptr<Packet> m_currentPkt = m_queue->Dequeue();
+            m_currentTxPacket = m_currentPkt;
             EthernetHeader ethernetHeader;
             m_currentPkt->PeekHeader(ethernetHeader);
             Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
@@ -297,11 +302,11 @@ namespace ns3 {
         return false;
     }
 
-    const Time &SatelliteNetDevice::getM_tInterframeGap() const {
+    Time SatelliteNetDevice::GetInterframeGap(){
         return m_InterframeGap;
     }
 
-    void SatelliteNetDevice::setM_tInterframeGap(const Time &m_tInterframeGap) {
+    void SatelliteNetDevice::SetInterframeGap(Time &m_tInterframeGap) {
         SatelliteNetDevice::m_InterframeGap = m_tInterframeGap;
     }
 
