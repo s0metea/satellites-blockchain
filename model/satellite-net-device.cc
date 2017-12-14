@@ -43,8 +43,7 @@ namespace ns3 {
     SatelliteNetDevice::SatelliteNetDevice():
             m_txMachineState (READY),
             m_channel (nullptr),
-            m_linkUp (false),
-            m_currentPkt (nullptr) {
+            m_linkUp (false) {
         NS_LOG_FUNCTION (this);
         m_queue = CreateObject<DropTailQueue<Packet> >();
         m_address = Mac48Address::Allocate ();
@@ -213,7 +212,7 @@ namespace ns3 {
         NS_LOG_FUNCTION (this << packet << protocol);
         m_protocol = protocol;
         Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
-        Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this);
+        Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
         return true;
     }
 
