@@ -27,6 +27,7 @@ main(int argc, char *argv[]) {
     cmd.AddValue ("tracePath", "Path to the NS2Mobility trace file", mobilityTracePath);
     cmd.AddValue ("maxBytes", "Total number of bytes for application to send", maxBytes);
     cmd.Parse (argc,argv);
+    cout << mobilityTracePath << endl;
 
     Time::SetResolution (Time::NS);
     LogComponentEnable ("UdpEchoClientApplication", LOG_ALL);
@@ -54,8 +55,8 @@ main(int argc, char *argv[]) {
     clientNetDevice->SetChannel(channel);
     serverNetDevice->SetChannel(channel);
 
-    clientNetDevice->SetDataRate(DataRate ("10MB/s"));
-    serverNetDevice->SetDataRate(DataRate ("10MB/s"));
+    clientNetDevice->SetDataRate(DataRate ("100MB/s"));
+    serverNetDevice->SetDataRate(DataRate ("100MB/s"));
 
     netDevices.Add(clientNetDevice);
 	netDevices.Add(serverNetDevice);
@@ -92,12 +93,9 @@ main(int argc, char *argv[]) {
     sinkApps.Start (Seconds (0.0));
     sinkApps.Stop (Seconds (200.0));
 
-    //MobilityHelper mobility;
-    //mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
     ns2.Install (); // configure movements for each node, while reading trace file
 
-    //mobility.Install(nodes);
     Ptr<FlowMonitor> flowMonitor;
     FlowMonitorHelper flowHelper;
     flowMonitor = flowHelper.InstallAll();

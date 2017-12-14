@@ -35,7 +35,7 @@ namespace ns3 {
                 .AddAttribute ("InterframeGap",
                                "The time to wait between packet (frame) transmissions",
                                TimeValue (MicroSeconds (static_cast<uint64_t>(10.0))),
-                               MakeTimeAccessor (&SatelliteNetDevice::m_tInterframeGap),
+                               MakeTimeAccessor (&SatelliteNetDevice::m_InterframeGap),
                                MakeTimeChecker ());
         return tid;
     }
@@ -167,7 +167,6 @@ namespace ns3 {
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
         NS_LOG_FUNCTION (this << packet << m_txMachineState << m_address << dst << protocol << packet->GetUid());
-        m_currentPkt = packet;
         m_protocol = protocol;
 
         //LLCHeader:
@@ -185,7 +184,7 @@ namespace ns3 {
         m_queue->Enqueue(packet);
         Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
         NS_LOG_INFO ("TX time: " << txTime);
-        Time totalTime = txTime + m_tInterframeGap;
+        Time totalTime = txTime + m_InterframeGap;
 
         if(m_txMachineState == READY)
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
@@ -197,15 +196,14 @@ namespace ns3 {
         NS_LOG_FUNCTION (this);
         m_txMachineState = BUSY;
         if(m_queue->GetNPackets() > 0) {
-            m_currentPkt = m_queue->Dequeue();
+            Ptr<Packet> m_currentPkt = m_queue->Dequeue();
             EthernetHeader ethernetHeader;
             m_currentPkt->PeekHeader(ethernetHeader);
-            Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
+            Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
             this->m_channel->Send(m_currentPkt, m_protocol, ethernetHeader.GetDestination(), this);
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         } else
-            m_currentPkt = nullptr;
-        m_txMachineState = READY;
+            m_txMachineState = READY;
         return true;
     }
 
@@ -214,34 +212,26 @@ namespace ns3 {
     {
         NS_LOG_FUNCTION (this << packet << protocol);
         m_protocol = protocol;
-        Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
-        m_currentPkt = packet;
-        Simulator::Schedule(totalTime, &SatelliteNetDevice::RX, this);
-        return true;
-    }
-
-    bool SatelliteNetDevice::RX() {
-        NS_LOG_FUNCTION (this);
-        Time totalTime = m_tInterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize());
+        Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
         Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this);
         return true;
     }
 
-    bool SatelliteNetDevice::ForwardUp() {
+
+    bool SatelliteNetDevice::ForwardUp(Ptr<Packet> packet) {
         NS_LOG_FUNCTION (this << m_protocol << m_address);
 
         EthernetHeader eh;
         LlcSnapHeader llc;
 
-        m_currentPkt->PeekHeader(eh);
-        m_currentPkt->PeekHeader(llc);
+        packet->PeekHeader(eh);
+        packet->PeekHeader(llc);
         Mac48Address from = eh.GetSource();
-        m_currentPkt->RemoveHeader(eh);
-        m_currentPkt->RemoveHeader(llc);
+        packet->RemoveHeader(eh);
+        packet->RemoveHeader(llc);
         NS_ASSERT(!m_forwardUp.IsNull());
-
         std::cout << "Protocol number at RX: " << llc.GetType() << " from: " << from << endl;
-        m_forwardUp (this, m_currentPkt->Copy(), llc.GetType(), from);
+        m_forwardUp (this, packet, llc.GetType(), from);
         return true;
     }
 
@@ -299,7 +289,6 @@ namespace ns3 {
         NS_LOG_FUNCTION (this);
         m_node = 0;
         m_channel = 0;
-        m_currentPkt = 0;
         m_queue = 0;
         NetDevice::DoDispose();
     }
@@ -308,5 +297,14 @@ namespace ns3 {
                                       uint16_t protocolNumber) {
         return false;
     }
+
+    const Time &SatelliteNetDevice::getM_tInterframeGap() const {
+        return m_InterframeGap;
+    }
+
+    void SatelliteNetDevice::setM_tInterframeGap(const Time &m_tInterframeGap) {
+        SatelliteNetDevice::m_InterframeGap = m_tInterframeGap;
+    }
+
 }
 

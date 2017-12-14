@@ -14,6 +14,9 @@ class NetDevice;
 class SatelliteNetDevice: public NetDevice {
 
 public:
+    const Time &getM_tInterframeGap() const;
+
+    void setM_tInterframeGap(const Time &m_tInterframeGap);
 
     /**
     * \brief Get the TypeId
@@ -93,11 +96,9 @@ private:
         BUSY     /**< The transmitter is busy transmitting a packet */
     };
 
-    bool RX();
-
     bool TX();
 
-    bool ForwardUp();
+    bool ForwardUp(Ptr<Packet> packet);
 
     /**
     * The state of the Net Device transmit state machine.
@@ -111,13 +112,12 @@ private:
     * The interfrace gap that the Net Device uses to throttle packet
     * transmission
     */
-    Time m_tInterframeGap;
+    Time m_InterframeGap;
     Ptr<Node> m_node; //!< Node owning this NetDevice
     uint16_t m_protocol;
     Address m_address;
     Ptr<SatelliteChannel> m_channel;
     bool m_linkUp;      //!< Identify if the link is up or not
-    Ptr<Packet> m_currentPkt; //!< Current packet processed
     static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
 
     /**
