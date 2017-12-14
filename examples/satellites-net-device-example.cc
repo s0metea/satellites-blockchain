@@ -83,14 +83,14 @@ main(int argc, char *argv[]) {
     // Set the amount of data to send in bytes.  Zero is unlimited.
     source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
     ApplicationContainer sourceApps = source.Install (nodes.Get (0));
-    sourceApps.Start (Seconds (1.0));
-    sourceApps.Stop (Seconds (9.0));
+    sourceApps.Start (Seconds (0.0));
+    sourceApps.Stop (Seconds (200.0));
 
 
     PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny(), port));
     ApplicationContainer sinkApps = sink.Install (nodes.Get (1));
     sinkApps.Start (Seconds (0.0));
-    sinkApps.Stop (Seconds (10.0));
+    sinkApps.Stop (Seconds (200.0));
 
     //MobilityHelper mobility;
     //mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
@@ -103,6 +103,7 @@ main(int argc, char *argv[]) {
     flowMonitor = flowHelper.InstallAll();
 
     std::cout << "RUN" << std::endl;
+    Simulator::Stop(Seconds(200));
     Simulator::Run ();
 
     flowMonitor->CheckForLostPackets ();
@@ -121,10 +122,9 @@ main(int argc, char *argv[]) {
             std::cout << "Flow " << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
             std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
             std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-            //std::cout << "  TxOffered:  " << i->second.txBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
             std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
             std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-            //std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 9.0 / 1000 / 1000  << " Mbps\n";
+            std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / 200 / 1000 / 1000  << " Mbps\n";
     }
 
 
