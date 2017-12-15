@@ -3,6 +3,7 @@
 
 #include <ns3/data-rate.h>
 #include <ns3/satellite-channel.h>
+#include <ns3/event-id.h>
 #include "ns3/net-device.h"
 
 
@@ -87,10 +88,7 @@ public:
   void SetInterframeGap (Time &m_tInterframeGap);
 
   Time GetInterframeGap ();
-
-  double getTotalTxSeconds ();
-
-  double getTotalRxSeconds ();
+  DataRate GetDataRate();
 
 private:
   /**
@@ -111,6 +109,7 @@ private:
   * \see TxMachineState
   */
   TxMachineState m_txMachineState;
+  EventId m_txEvent;
 
   DataRate bps;
 

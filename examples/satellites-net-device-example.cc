@@ -88,13 +88,13 @@ main(int argc, char *argv[]) {
     source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
     ApplicationContainer sourceApps = source.Install (nodes.Get (0));
     sourceApps.Start (Seconds (0.0));
-    sourceApps.Stop (Seconds (200.0));
+    sourceApps.Stop (Seconds (500.0));
 
 
     PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny(), port));
     ApplicationContainer sinkApps = sink.Install (nodes.Get (1));
     sinkApps.Start (Seconds (0.0));
-    sinkApps.Stop (Seconds (200.0));
+    sinkApps.Stop (Seconds (500.0));
 
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
     ns2.Install (); // configure movements for each node, while reading trace file
@@ -104,7 +104,7 @@ main(int argc, char *argv[]) {
     flowMonitor = flowHelper.InstallAll();
 
     std::cout << "RUN" << std::endl;
-    Simulator::Stop(Seconds(210));
+    Simulator::Stop(Seconds(500));
     Simulator::Run ();
 
     flowMonitor->CheckForLostPackets ();
@@ -116,9 +116,13 @@ main(int argc, char *argv[]) {
             std::cout << "Flow " << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
             std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
             std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
+
             std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
             std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-            std::cout << "  Throughput RX: " << i->second.txBytes / 1000000 / (i->second.timeLastRxPacket - i->second.timeFirstRxPacket) << " Mbytes/s\n";
+
+            std::cout << "  Throughput RX: " << i->second.rxBytes * 8 / 1000000 / (i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstRxPacket.GetSeconds()) << " Mbits/s\n";
+            std::cout << "  Throughput TX: " << i->second.txBytes * 8 / 1000000 / (i->second.timeLastTxPacket.GetSeconds() - i->second.timeFirstTxPacket.GetSeconds()) << " Mbits/s\n";
+
     }
     Simulator::Destroy ();
 	NS_LOG_INFO ("Done.");

@@ -67,6 +67,7 @@ void
 SatelliteNetDevice::SetDataRate (DataRate bps)
 {
   this->bps = bps;
+  cout << this->bps.GetBitRate() / 1000000 << endl;
 }
 
 Ptr<Queue<Packet> >
@@ -186,37 +187,34 @@ SatelliteNetDevice::Send (Ptr<Packet> packet, const Address &dst, uint16_t proto
     {
       TX ();
     }
-  else
-    {
-      Time txTime = bps.CalculateBytesTxTime (packet->GetSize ());
-      Time totalTime = txTime + m_InterframeGap;
-      Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
-    }
   return true;
 }
 
 bool
 SatelliteNetDevice::TX ()
 {
-  m_txMachineState = BUSY;
-  if (m_queue->GetNPackets () > 0)
-    {
-      Ptr<Packet> m_currentPkt = m_queue->Dequeue ();
-      m_currentTxPacket = m_currentPkt;
-      EthernetHeader ethernetHeader;
-      m_currentPkt->PeekHeader (ethernetHeader);
-      Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize ());
-      this->m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
-      Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
-    }
-  else
-    {
+
+    if (m_queue->GetNPackets () == 0) {
       m_txMachineState = READY;
+      return true;
     }
-  return true;
+    m_txMachineState = BUSY;
+    NS_ASSERT(!m_txEvent.IsRunning());
+    Ptr<Packet> m_currentPkt = m_queue->Dequeue ();
+    m_currentTxPacket = m_currentPkt;
+    EthernetHeader ethernetHeader;
+    m_currentPkt->PeekHeader (ethernetHeader);
+    Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize ());
+    this->m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
+    m_txEvent = Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
+    return true;
 }
 
-bool
+    DataRate SatelliteNetDevice::GetDataRate() {
+        return bps;
+    }
+
+    bool
 SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol)
 {
   m_protocol = protocol;
