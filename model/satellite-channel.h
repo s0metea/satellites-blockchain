@@ -65,12 +65,17 @@ public:
   */
   void Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender);
 
+  std::vector<std::vector<std::vector<bool>>> GetLinks();
+  void SetLinks(std::vector<std::vector<std::vector<bool>>> links);
+
 private:
   SatelliteChannel (SatelliteChannel const &);
   SatelliteChannel& operator= (SatelliteChannel const &);
   Ptr<PropagationDelayModel> m_delay;       //!< Propagation delay model
+  //!< List of SatNetDevices connected to this SatNetChannel
   typedef std::vector<Ptr<SatelliteNetDevice> > NetList;
-  NetList netDeviceList;       //!< List of SatNetDevices connected to this SatNetChannel
+  NetList netDeviceList;
+  std::vector<std::vector<std::vector<bool>>> links;
 };
 }
 

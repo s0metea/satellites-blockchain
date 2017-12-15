@@ -4,3 +4,6 @@ $node(0) set Z_ 0
 $node(1) set X_ 10000
 $node(1) set Y_ 10000
 $node(1) set Z_ 10000
+$node(2) set X_ 5000
+$node(2) set Y_ 5000
+$node(2) set Z_ 5000
