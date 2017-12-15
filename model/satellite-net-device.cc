@@ -231,17 +231,40 @@ namespace ns3 {
         packet->PeekHeader(eh);
         packet->PeekHeader(llc);
         Mac48Address from = eh.GetSource();
+        Mac48Address dst = eh.GetDestination();
         packet->RemoveHeader(eh);
-        packet->RemoveHeader(llc);
-        NS_ASSERT(!m_forwardUp.IsNull());
-        std::cout << "Protocol number at RX: " << llc.GetType() << " from: " << from << endl;
-        m_forwardUp (this, packet, llc.GetType(), from);
+        cout << dst << " " << Mac48Address::ConvertFrom(m_address) << endl;
+
+        NetDevice::PacketType type;
+        if (dst.IsBroadcast ())
+        {
+            type = NetDevice::PACKET_BROADCAST;
+        }
+        else if (dst.IsGroup ())
+        {
+            type = NetDevice::PACKET_MULTICAST;
+        }
+        else if (dst == Mac48Address::ConvertFrom(m_address))
+        {
+            type = NetDevice::PACKET_HOST;
+        }
+        else
+        {
+            type = NetDevice::PACKET_OTHERHOST;
+        }
+
+        if (type != NetDevice::PACKET_OTHERHOST)
+        {
+            packet->RemoveHeader (llc);
+            NS_ASSERT(!m_forwardUp.IsNull());
+            m_forwardUp(this, packet, llc.GetType(), from);
+        }
         return true;
     }
 
     bool
     SatelliteNetDevice::IsMulticast(void) const {
-        return false;
+        return true;
     }
 
     bool
