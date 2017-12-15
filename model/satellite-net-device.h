@@ -8,163 +8,165 @@
 
 namespace ns3 {
 
-template <typename Item> class DropTailQueue;
+template <typename Item>
+class DropTailQueue;
 class NetDevice;
 
-class SatelliteNetDevice: public NetDevice {
+class SatelliteNetDevice : public NetDevice
+{
 
 public:
-    /**
-    * \brief Get the TypeId
-    *
-    * \return The TypeId for this class
-    */
-    static TypeId GetTypeId();
+  /**
+  * \brief Get the TypeId
+  *
+  * \return The TypeId for this class
+  */
+  static TypeId GetTypeId ();
 
-    SatelliteNetDevice();
+  SatelliteNetDevice ();
 
-    virtual ~SatelliteNetDevice();
+  virtual ~SatelliteNetDevice ();
 
-    //inherited from NetDevice base class.
-    void SetIfIndex(const uint32_t index);
+  //inherited from NetDevice base class.
+  void SetIfIndex (const uint32_t index);
 
-    uint32_t GetIfIndex(void) const;
+  uint32_t GetIfIndex (void) const;
 
-    void SetChannel(Ptr<SatelliteChannel> channel);
+  void SetChannel (Ptr<SatelliteChannel> channel);
 
-    Ptr<Channel> GetChannel(void) const;
+  Ptr<Channel> GetChannel (void) const;
 
-    void SetAddress(Address address);
+  void SetAddress (Address address);
 
-    Address GetAddress(void) const;
+  Address GetAddress (void) const;
 
-    bool SetMtu(const uint16_t mtu);
+  bool SetMtu (const uint16_t mtu);
 
-    uint16_t GetMtu(void) const;
+  uint16_t GetMtu (void) const;
 
-    bool IsLinkUp(void) const;
+  bool IsLinkUp (void) const;
 
-    void AddLinkChangeCallback(Callback<void> callback);
+  void AddLinkChangeCallback (Callback<void> callback);
 
-    bool IsBroadcast(void) const;
+  bool IsBroadcast (void) const;
 
-    Address GetBroadcast(void) const;
+  Address GetBroadcast (void) const;
 
-    bool IsMulticast(void) const;
+  bool IsMulticast (void) const;
 
-    Address GetMulticast(Ipv4Address multicastGroup) const;
+  Address GetMulticast (Ipv4Address multicastGroup) const;
 
-    bool IsPointToPoint(void) const;
+  bool IsPointToPoint (void) const;
 
-    bool IsBridge(void) const;
+  bool IsBridge (void) const;
 
-    bool Send(Ptr<Packet> packet, const Address &to, uint16_t protocol);
+  bool Send (Ptr<Packet> packet, const Address &to, uint16_t protocol);
 
-    bool SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber);
+  bool SendFrom (Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber);
 
-    Ptr<Node> GetNode(void) const;
-    void SetNode(Ptr<Node> node);
+  Ptr<Node> GetNode (void) const;
+  void SetNode (Ptr<Node> node);
 
-    bool NeedsArp(void) const;
-    Address GetMulticast(Ipv6Address addr) const;
+  bool NeedsArp (void) const;
+  Address GetMulticast (Ipv6Address addr) const;
 
-    void SetReceiveCallback(NetDevice::ReceiveCallback cb);
-    void SetPromiscReceiveCallback(NetDevice::PromiscReceiveCallback cb);
+  void SetReceiveCallback (NetDevice::ReceiveCallback cb);
+  void SetPromiscReceiveCallback (NetDevice::PromiscReceiveCallback cb);
 
-    bool SupportsSendFrom(void) const;
+  bool SupportsSendFrom (void) const;
 
-    void SetDataRate(DataRate bps);
+  void SetDataRate (DataRate bps);
 
-    /**
-    * \brief Dispose of the object
-    */
-    void DoDispose(void);
+  /**
+  * \brief Dispose of the object
+  */
+  void DoDispose (void);
 
-    bool StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol);
+  bool StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol);
 
-    void SetInterframeGap(Time &m_tInterframeGap);
+  void SetInterframeGap (Time &m_tInterframeGap);
 
-    Time GetInterframeGap();
+  Time GetInterframeGap ();
 
-    const Time getTotalTxSeconds();
+  const Time getTotalTxSeconds ();
 
-    const Time getTotalRxSeconds();
+  const Time getTotalRxSeconds ();
 
 private:
+  /**
+  * Enumeration of the states of the transmit machine of the net device.
+  */
+  enum TxMachineState
+  {
+    READY,       /**< The transmitter is ready to begin transmission of a packet */
+    BUSY         /**< The transmitter is busy transmitting a packet */
+  };
 
-    /**
-    * Enumeration of the states of the transmit machine of the net device.
-    */
-    enum TxMachineState {
-        READY,   /**< The transmitter is ready to begin transmission of a packet */
-        BUSY     /**< The transmitter is busy transmitting a packet */
-    };
+  bool TX ();
 
-    bool TX();
+  bool ForwardUp (Ptr<Packet> packet);
 
-    bool ForwardUp(Ptr<Packet> packet);
+  /**
+  * The state of the Net Device transmit state machine.
+  * \see TxMachineState
+  */
+  TxMachineState m_txMachineState;
 
-    /**
-    * The state of the Net Device transmit state machine.
-    * \see TxMachineState
-    */
-    TxMachineState m_txMachineState;
+  DataRate bps;
 
-    DataRate bps;
+  /**
+  * The interfrace gap that the Net Device uses to throttle packet
+  * transmission
+  */
+  Time m_InterframeGap;
+  Ptr<Packet> m_currentTxPacket;
+  Ptr<Node> m_node;   //!< Node owning this NetDevice
+  uint16_t m_protocol;
+  Address m_address;
+  Ptr<SatelliteChannel> m_channel;
+  Time totalTxSeconds;
+  Time totalRxSeconds;
 
-    /**
-    * The interfrace gap that the Net Device uses to throttle packet
-    * transmission
-    */
-    Time m_InterframeGap;
-    Ptr<Packet> m_currentTxPacket;
-    Ptr<Node> m_node; //!< Node owning this NetDevice
-    uint16_t m_protocol;
-    Address m_address;
-    Ptr<SatelliteChannel> m_channel;
-    Time totalTxSeconds;
-    Time totalRxSeconds;
+  bool m_linkUp;        //!< Identify if the link is up or not
+  static const uint16_t DEFAULT_MTU = 1500;   //!< Default MTU
 
-    bool m_linkUp;      //!< Identify if the link is up or not
-    static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
+  /**
+   * \brief The Maximum Transmission Unit
+   *
+   * This corresponds to the maximum
+   * number of bytes that can be transmitted as seen from higher layers.
+   * This corresponds to the 1500 byte MTU size often seen on IP over
+   * Ethernet.
+   */
+  uint32_t m_mtu;
 
-    /**
-     * \brief The Maximum Transmission Unit
-     *
-     * This corresponds to the maximum
-     * number of bytes that can be transmitted as seen from higher layers.
-     * This corresponds to the 1500 byte MTU size often seen on IP over
-     * Ethernet.
-     */
-    uint32_t m_mtu;
+  /**
+  * The Queue which this SatelliteNetDevice uses as a packet source.
+  * Management of this Queue has been delegated to the SatNetDevice
+  * and it has the responsibility for deletion.
+  * \see class DropTailQueue
+  */
+  Ptr<DropTailQueue<Packet> > m_queue;
 
-    /**
-    * The Queue which this SatelliteNetDevice uses as a packet source.
-    * Management of this Queue has been delegated to the SatNetDevice
-    * and it has the responsibility for deletion.
-    * \see class DropTailQueue
-    */
-    Ptr<DropTailQueue<Packet>> m_queue;
+  ReceiveCallback m_forwardUp;   //!< forward up callback
 
-    ReceiveCallback m_forwardUp; //!< forward up callback
+  /**
+  * \brief Copy constructor
+  *
+  * The method is private, so it is DISABLED.
+  * \param o Other NetDevice
+  */
+  SatelliteNetDevice (const SatelliteNetDevice &o);
 
-    /**
-    * \brief Copy constructor
-    *
-    * The method is private, so it is DISABLED.
-    * \param o Other NetDevice
-    */
-    SatelliteNetDevice(const SatelliteNetDevice &o);
-
-    /**
-    * \brief Assign operator
-    *
-    * The method is private, so it is DISABLED.
-    *
-    * \param o Other NetDevice
-    * \return New instance of the NetDevice
-    */
-    SatelliteNetDevice &operator=(const SatelliteNetDevice &o);
+  /**
+  * \brief Assign operator
+  *
+  * The method is private, so it is DISABLED.
+  *
+  * \param o Other NetDevice
+  * \return New instance of the NetDevice
+  */
+  SatelliteNetDevice &operator= (const SatelliteNetDevice &o);
 };
 
 } //ns3 namespace
