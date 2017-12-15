@@ -43,8 +43,6 @@ SatelliteNetDevice::GetTypeId ()
 SatelliteNetDevice::SatelliteNetDevice ()
   : m_txMachineState (READY),
     m_channel (nullptr),
-    totalTxSeconds (0),
-    totalRxSeconds (0),
     m_linkUp (false)
 {
   NS_LOG_FUNCTION (this);
@@ -52,16 +50,6 @@ SatelliteNetDevice::SatelliteNetDevice ()
   m_address = Mac48Address::Allocate ();
   //cout << this << "MAC Address: " << m_address << endl;
   m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &> ();
-}
-
-const Time SatelliteNetDevice::getTotalTxSeconds ()
-{
-  return totalTxSeconds;
-}
-
-const Time SatelliteNetDevice::getTotalRxSeconds ()
-{
-  return totalRxSeconds;
 }
 
 SatelliteNetDevice::~SatelliteNetDevice ()
@@ -218,7 +206,6 @@ SatelliteNetDevice::TX ()
       EthernetHeader ethernetHeader;
       m_currentPkt->PeekHeader (ethernetHeader);
       Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize ());
-      totalTxSeconds += totalTime;
       this->m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
       Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
     }
@@ -234,7 +221,6 @@ SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t pr
 {
   m_protocol = protocol;
   Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (packet->GetSize ());
-  totalRxSeconds += totalTime;
   Simulator::Schedule (totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
   return true;
 }
