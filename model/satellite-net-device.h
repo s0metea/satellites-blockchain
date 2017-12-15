@@ -14,11 +14,6 @@ class NetDevice;
 class SatelliteNetDevice: public NetDevice {
 
 public:
-
-    void SetInterframeGap(Time &m_tInterframeGap);
-
-    Time GetInterframeGap();
-
     /**
     * \brief Get the TypeId
     *
@@ -86,6 +81,10 @@ public:
     void DoDispose(void);
 
     bool StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol);
+
+    void SetInterframeGap(Time &m_tInterframeGap);
+
+    Time GetInterframeGap();
 
 private:
 

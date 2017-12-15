@@ -29,7 +29,6 @@ main(int argc, char *argv[]) {
     cmd.Parse (argc,argv);
     cout << mobilityTracePath << endl;
 
-    Time::SetResolution (Time::NS);
     LogComponentEnable ("UdpEchoClientApplication", LOG_ALL);
     LogComponentEnable ("UdpEchoServerApplication", LOG_ALL);
     LogComponentEnable ("ns3::SatelliteNetDevice", LOG_ALL);
