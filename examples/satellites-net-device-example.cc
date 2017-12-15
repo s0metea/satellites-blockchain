@@ -9,6 +9,7 @@
 #include <ns3/packet-sink.h>
 #include <ns3/packet-sink-helper.h>
 #include "ns3/flow-monitor-module.h"
+#include "ns3/netanim-module.h"
 
 using namespace ns3;
 using namespace std;
@@ -105,6 +106,8 @@ main(int argc, char *argv[]) {
 
     std::cout << "RUN" << std::endl;
     Simulator::Stop(Seconds(500));
+
+    AnimationInterface anim ("data-flow-animation.xml"); // Mandatory
     Simulator::Run ();
 
     flowMonitor->CheckForLostPackets ();
