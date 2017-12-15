@@ -43,12 +43,22 @@ namespace ns3 {
     SatelliteNetDevice::SatelliteNetDevice():
             m_txMachineState (READY),
             m_channel (nullptr),
+            totalTxSeconds(0),
+            totalRxSeconds(0),
             m_linkUp (false) {
         NS_LOG_FUNCTION (this);
         m_queue = CreateObject<DropTailQueue<Packet> >();
         m_address = Mac48Address::Allocate ();
-        cout << this << "MAC Address: " << m_address << endl;
+        //cout << this << "MAC Address: " << m_address << endl;
         m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
+    }
+
+    const Time SatelliteNetDevice::getTotalTxSeconds() {
+        return totalTxSeconds;
+    }
+
+    const Time SatelliteNetDevice::getTotalRxSeconds() {
+        return totalRxSeconds;
     }
 
     SatelliteNetDevice::~SatelliteNetDevice()
@@ -65,14 +75,12 @@ namespace ns3 {
     void
     SatelliteNetDevice::SetDataRate(DataRate bps)
     {
-        NS_LOG_FUNCTION (this);
         this->bps = bps;
     }
 
     Ptr<Queue<Packet>>
     SimpleNetDevice::GetQueue () const
     {
-        NS_LOG_FUNCTION (this);
         return m_queue;
     }
 
@@ -90,7 +98,6 @@ namespace ns3 {
 
     void
     SatelliteNetDevice::SetChannel(Ptr<SatelliteChannel> channel)  {
-        NS_LOG_FUNCTION (this << channel);
         m_channel = channel;
     }
 
@@ -108,7 +115,6 @@ namespace ns3 {
 
     uint16_t
     SatelliteNetDevice::GetMtu(void) const {
-        NS_LOG_FUNCTION (this);
         return static_cast<uint16_t>(m_mtu);
     }
 
@@ -165,7 +171,6 @@ namespace ns3 {
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet << m_txMachineState << m_address << dst << protocol << packet->GetUid());
         m_protocol = protocol;
 
         //LLCHeader:
@@ -188,7 +193,6 @@ namespace ns3 {
         else {
             Time txTime = bps.CalculateBytesTxTime (packet->GetSize());
             Time totalTime = txTime + m_InterframeGap;
-            NS_LOG_INFO ("TX time: " << txTime);
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         }
         return true;
@@ -196,7 +200,6 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::TX() {
-        NS_LOG_FUNCTION (this);
         m_txMachineState = BUSY;
         if(m_queue->GetNPackets() > 0) {
             Ptr<Packet> m_currentPkt = m_queue->Dequeue();
@@ -204,6 +207,7 @@ namespace ns3 {
             EthernetHeader ethernetHeader;
             m_currentPkt->PeekHeader(ethernetHeader);
             Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(m_currentPkt->GetSize());
+            totalTxSeconds += totalTime;
             this->m_channel->Send(m_currentPkt, m_protocol, ethernetHeader.GetDestination(), this);
             Simulator::Schedule(totalTime, &SatelliteNetDevice::TX, this);
         } else
@@ -214,16 +218,15 @@ namespace ns3 {
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol)
     {
-        NS_LOG_FUNCTION (this << packet << protocol);
         m_protocol = protocol;
         Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (packet->GetSize());
+        totalRxSeconds += totalTime;
         Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
         return true;
     }
 
 
     bool SatelliteNetDevice::ForwardUp(Ptr<Packet> packet) {
-        NS_LOG_FUNCTION (this << m_protocol << m_address);
 
         EthernetHeader eh;
         LlcSnapHeader llc;
@@ -233,7 +236,7 @@ namespace ns3 {
         Mac48Address from = eh.GetSource();
         Mac48Address dst = eh.GetDestination();
         packet->RemoveHeader(eh);
-        cout << dst << " " << Mac48Address::ConvertFrom(m_address) << endl;
+        //cout << dst << " " << Mac48Address::ConvertFrom(m_address) << endl;
 
         NetDevice::PacketType type;
         if (dst.IsBroadcast ())
@@ -274,19 +277,16 @@ namespace ns3 {
 
     Address
     SatelliteNetDevice::GetBroadcast(void) const {
-        NS_LOG_FUNCTION (this);
         return Mac48Address::GetBroadcast();
     }
 
     bool
     SatelliteNetDevice::IsLinkUp(void) const {
-        NS_LOG_FUNCTION (this);
         return m_linkUp;
     }
 
     bool
     SatelliteNetDevice::SetMtu(const uint16_t mtu) {
-        NS_LOG_FUNCTION (this << mtu);
         m_mtu = mtu;
         return true;
     }

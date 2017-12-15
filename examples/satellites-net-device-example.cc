@@ -118,8 +118,8 @@ main(int argc, char *argv[]) {
             std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
             std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
             std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-            std::cout << "  Throughput RX: " << i->second.rxBytes * 8 / 1024 / 200 << " Megabits/s\n";
-            std::cout << "  Throughput TX: " << i->second.txBytes * 8 / 1024 / 200 << " Megabits/s\n";
+            std::cout << "  Throughput RX: " << i->second.rxBytes * 8 / 1024 /  clientNetDevice->getTotalRxSeconds() << " Megabits/s\n";
+            std::cout << "  Throughput TX: " << i->second.txBytes * 8 / 1024 / serverNetDevice->getTotalRxSeconds() << " Megabits/s\n";
     }
 
 

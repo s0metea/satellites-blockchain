@@ -86,6 +86,10 @@ public:
 
     Time GetInterframeGap();
 
+    const Time getTotalTxSeconds();
+
+    const Time getTotalRxSeconds();
+
 private:
 
     /**
@@ -118,6 +122,9 @@ private:
     uint16_t m_protocol;
     Address m_address;
     Ptr<SatelliteChannel> m_channel;
+    Time totalTxSeconds;
+    Time totalRxSeconds;
+
     bool m_linkUp;      //!< Identify if the link is up or not
     static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
 

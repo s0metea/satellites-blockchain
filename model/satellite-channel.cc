@@ -31,11 +31,9 @@ namespace ns3 {
     }
 
     SatelliteChannel::SatelliteChannel() {
-        NS_LOG_FUNCTION (this);
     }
 
     SatelliteChannel::~SatelliteChannel() {
-        NS_LOG_FUNCTION (this);
         netDeviceList.clear();
     }
 
@@ -46,7 +44,6 @@ namespace ns3 {
 
     void
     SatelliteChannel::Add(Ptr<SatelliteNetDevice> device) {
-        NS_LOG_FUNCTION (this);
         cout << "Adding netDevice, address = " << device->GetAddress() << endl;
         netDeviceList.push_back(device);
     }
@@ -63,22 +60,21 @@ namespace ns3 {
 
     void
     SatelliteChannel::Send(Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender) {
-        NS_LOG_LOGIC ("UID is " << packet->GetUid());
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
         NS_ASSERT (senderMobility != 0);
         NS_ASSERT(m_delay);
-        std::cout << "Device list size " << netDeviceList.size() << std::endl;
+        //std::cout << "Device list size " << netDeviceList.size() << std::endl;
         for (NetList::iterator netDevice = netDeviceList.begin(); netDevice != netDeviceList.end(); netDevice++) {
-            std::cout << "SAT Channel " << sender->GetAddress() << " " << (*netDevice)->GetAddress() << endl;
+            //std::cout << "SAT Channel " << sender->GetAddress() << " " << (*netDevice)->GetAddress() << endl;
             if (sender->GetAddress() != (*netDevice)->GetAddress()) {
                 NS_ASSERT((*netDevice)->GetNode() != 0);
                 Ptr<MobilityModel> receiverMobility = (*netDevice)->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT(receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
-                NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode()->GetId()
-                                                       << " --> Node" << (*netDevice)->GetNode()->GetId()
-                                                       << " = " << delay);
-                NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility) << endl);
+//                NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode()->GetId()
+//                                                       << " --> Node" << (*netDevice)->GetNode()->GetId()
+//                                                       << " = " << delay);
+//                NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility) << endl);
                 Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX, (*netDevice), packet->Copy(), sender->GetAddress(), protocol);
             }
         }
