@@ -9,8 +9,9 @@
 #include <ns3/packet-sink.h>
 #include <ns3/packet-sink-helper.h>
 #include <ns3/low-resolution-radio-module.h>
-#include "ns3/flow-monitor-module.h"
-#include "ns3/v4ping-helper.h"
+#include <ns3/flow-monitor-module.h>
+#include <ns3/v4ping-helper.h>
+#include <ns3/qemunet-module.h>
 
 using namespace ns3;
 using namespace std;
