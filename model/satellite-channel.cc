@@ -5,7 +5,6 @@
 #include <ns3/udp-client-server-helper.h>
 #include <ns3/propagation-delay-model.h>
 #include <ns3/satellite-net-device.h>
-#include <iostream>
 #include "satellite-channel.h"
 
 using namespace std;

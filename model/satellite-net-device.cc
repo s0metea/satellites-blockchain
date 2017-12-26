@@ -15,7 +15,7 @@ TypeId
 SatelliteNetDevice::GetTypeId ()
 {
   static TypeId tid = TypeId ("ns3::SatelliteNetDevice")
-    .SetParent<NetDevice> ()
+    .SetParent<lrr::NeighborAwareDevice> ()
     .SetGroupName ("NetDevice")
     .AddAttribute ("DataRate",
                    "The data rate that the Net Device uses to simulate packet transmission timing.",
@@ -326,7 +326,6 @@ SatelliteNetDevice::DoDispose ()
   m_node = 0;
   m_channel = 0;
   m_queue = 0;
-  NetDevice::DoDispose ();
 }
 
 bool SatelliteNetDevice::SendFrom (Ptr<Packet> packet, const Address &source, const Address &dest,
@@ -343,6 +342,26 @@ Time SatelliteNetDevice::GetInterframeGap ()
 void SatelliteNetDevice::SetInterframeGap (Time &m_tInterframeGap)
 {
   SatelliteNetDevice::m_InterframeGap = m_tInterframeGap;
+}
+
+vector<Ptr<NetDevice>> SatelliteNetDevice::GetCommunicationNeighbors() const {
+    vector<Ptr<NetDevice>> neighbors;
+    //For debug purposes we don't change the links.
+    double currentSecond = 0;
+    //We need to know current net device id, so:
+    uint32_t currentIndex = 0;
+    for(uint32_t i = 0; i < m_channel->GetNDevices(); i++) {
+        if(m_channel->GetDevice(i)->GetAddress() == m_address)
+            currentIndex = i;
+    }
+    //Choosing current time frame and current net device:
+    std::vector<bool> links = m_channel->GetLinks()[currentSecond][currentIndex];
+    for(uint32_t i = 0; i < links.size(); i++) {
+        if(i != currentIndex && links[i] == true) {
+            neighbors.push_back(m_channel->GetDevice(i));
+        }
+    }
+    return neighbors;
 }
 
 }

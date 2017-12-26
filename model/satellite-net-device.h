@@ -4,8 +4,9 @@
 #include <ns3/data-rate.h>
 #include <ns3/satellite-channel.h>
 #include <ns3/event-id.h>
-#include "ns3/net-device.h"
-
+#include <ns3/net-device.h>
+#include <ns3/lrr-device.h>
+#include <ns3/callback.h>
 
 namespace ns3 {
 
@@ -13,7 +14,7 @@ template <typename Item>
 class DropTailQueue;
 class NetDevice;
 
-class SatelliteNetDevice : public NetDevice
+class SatelliteNetDevice : public lrr::NeighborAwareDevice
 {
 
 public:
@@ -77,6 +78,8 @@ public:
   bool SupportsSendFrom (void) const;
 
   void SetDataRate (DataRate bps);
+
+  std::vector<Ptr<NetDevice>> GetCommunicationNeighbors () const;
 
   /**
   * \brief Dispose of the object
@@ -144,7 +147,7 @@ private:
   */
   Ptr<DropTailQueue<Packet> > m_queue;
 
-  ReceiveCallback m_forwardUp;   //!< forward up callback
+  NetDevice::ReceiveCallback m_forwardUp;   //!< forward up callback
 
   /**
   * \brief Copy constructor
