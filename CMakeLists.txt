@@ -13,7 +13,9 @@ set(SOURCE_FILES
         model/satellite-net-device.cc
         model/satellite-channel.cc
         model/satellite-net-device.h
-        model/satellite-channel.h)
+        model/satellite-channel.h
+        helper/satellites-blockchain-helper.cc
+        helper/satellites-blockchain-helper.h)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

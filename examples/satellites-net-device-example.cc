@@ -12,6 +12,7 @@
 #include <ns3/flow-monitor-module.h>
 #include <ns3/v4ping-helper.h>
 #include <ns3/qemunet-module.h>
+#include <ns3/satellites-blockchain-helper.h>
 
 using namespace ns3;
 using namespace std;
@@ -63,61 +64,19 @@ main(int argc, char *argv[]) {
     LogComponentEnable ("Ns2MobilityHelper", LOG_ALL);
 
 	NS_LOG_INFO ("Objects creation");
-	Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
-	Ptr<Node> sender = CreateObject<Node> ();
-    Ptr<Node> middleNode = CreateObject<Node> ();
-    Ptr<Node> receiver = CreateObject<Node> ();
-    Ptr<SatelliteNetDevice> senderNetDevice = CreateObject<SatelliteNetDevice> ();
-    Ptr<SatelliteNetDevice> middleNodeNetDevice = CreateObject<SatelliteNetDevice> ();
-    Ptr<SatelliteNetDevice> receiverNetDevice = CreateObject<SatelliteNetDevice> ();
-
 	NodeContainer nodes;
-	nodes.Add(sender);
-    nodes.Add(middleNode);
-    nodes.Add(receiver);
+	SatellitesHelper satHelper;
+    nodes = satHelper.ConfigureNodes(3, DataRate ("100MB/s"), Time(0));
 
     NS_LOG_INFO ("Mobility setup");
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
     ns2.Install (); // configure movements for each node, while reading trace file
 
-	NS_LOG_INFO ("NetDevices setup");
-    NetDeviceContainer netDevices;
-    sender->AddDevice(senderNetDevice);
-    middleNode->AddDevice(middleNodeNetDevice);
-    receiver->AddDevice(receiverNetDevice);
-
-    senderNetDevice->SetChannel(channel);
-    middleNodeNetDevice->SetChannel(channel);
-    receiverNetDevice->SetChannel(channel);
-
-    senderNetDevice->SetDataRate(DataRate ("100MB/s"));
-    middleNodeNetDevice->SetDataRate(DataRate ("100MB/s"));
-    receiverNetDevice->SetDataRate(DataRate ("100MB/s"));
-
-    Time time(0);
-    senderNetDevice->SetInterframeGap(time);
-    middleNodeNetDevice->SetInterframeGap(time);
-    receiverNetDevice->SetInterframeGap(time);
-
-    netDevices.Add(senderNetDevice);
-	netDevices.Add(middleNodeNetDevice);
-    netDevices.Add(receiverNetDevice);
-
-    NS_LOG_INFO ("Channel setup");
-    ObjectFactory m_propagationDelay;
-    m_propagationDelay.SetTypeId("ns3::ConstantSpeedPropagationDelayModel");
-    Ptr<PropagationDelayModel> delay = m_propagationDelay.Create<PropagationDelayModel> ();
-    channel->SetPropagationDelay (delay);
-
-    channel->Add(senderNetDevice);
-    channel->Add(middleNodeNetDevice);
-    channel->Add(receiverNetDevice);
-
     std::vector<std::vector<std::vector<bool>>> links;
 
     if(!linksPath.empty()) {
         links = loadLinks(linksPath);
-        channel->SetLinks(links);
+        satHelper.getM_channel()->SetLinks(links);
     }
 
     //5. Install internet stack and routing:
@@ -127,7 +86,7 @@ main(int argc, char *argv[]) {
     internet.Install (nodes);
     Ipv4AddressHelper ipAddrs;
     ipAddrs.SetBase ("10.0.0.0", "255.255.255.0");
-    Ipv4InterfaceContainer interfaces = ipAddrs.Assign (netDevices);
+    Ipv4InterfaceContainer interfaces = ipAddrs.Assign (satHelper.getM_netDevices());
 
     //6. Install applications (ping)
     V4PingHelper ping (interfaces.GetAddress (2));
@@ -136,31 +95,16 @@ main(int argc, char *argv[]) {
     p.Start (Seconds (0.001));
     p.Stop (Seconds (400));
 
-    Ptr<FlowMonitor> flowMonitor;
-    FlowMonitorHelper flowHelper;
-    flowMonitor = flowHelper.InstallAll();
+    qemunet::Task task1 ("ping: qemu-1 -> qemu-3");
+    task1.AddCommand ("qemu-1", "ping -c 30 10.0.0.3; route -n");
+    std::string input ("/home/mike/ns-3-dev/src/satellites-blockchain/examples/small.ffs");
+    Ptr<qemunet::TopologyHelper> qn = CreateObjectWithAttributes<qemunet::TopologyHelper> ("AutoStartServices", BooleanValue (true));
+    qn->Create (input, task1.StartCallback ());
 
     //7. GO!
     lrr::GlobalGraph::Instance ()->Start ();
     Simulator::Stop (Seconds (500));
     Simulator::Run ();
-    flowMonitor->CheckForLostPackets ();
-    Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowHelper.GetClassifier ());
-    FlowMonitor::FlowStatsContainer stats = flowMonitor->GetFlowStats ();
-    cout << stats.size();
-    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
-    {
-        Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-        std::cout << "Flow " << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
-        std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
-        std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-
-        std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
-        std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-
-        std::cout << "  Throughput RX: " << i->second.rxBytes * 8 / 1000000 / (i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstRxPacket.GetSeconds()) << " Mbits/s\n";
-        std::cout << "  Throughput TX: " << i->second.txBytes * 8 / 1000000 / (i->second.timeLastTxPacket.GetSeconds() - i->second.timeFirstTxPacket.GetSeconds()) << " Mbits/s\n";
-    }
 
     lrr::GlobalGraph::Instance ()->Stop ();
 
