@@ -3,8 +3,6 @@
 #include <ns3/pointer.h>
 #include <ns3/drop-tail-queue.h>
 
-using namespace std;
-
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("ns3::SatelliteNetDevice");
@@ -22,11 +20,6 @@ SatelliteNetDevice::GetTypeId ()
                    DataRateValue (DataRate ("1250MB/s")),
                    MakeDataRateAccessor (&SatelliteNetDevice::bps),
                    MakeDataRateChecker ())
-//                .AddAttribute ("Address",
-//                               "The MAC address of this device.",
-//                               AddressValue (Mac48Address::Allocate()),
-//                               MakeAddressAccessor (&SatelliteNetDevice::m_address),
-//                               MakeAddressChecker ())
     .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
                    UintegerValue (DEFAULT_MTU),
                    MakeUintegerAccessor (&SatelliteNetDevice::SetMtu,
@@ -46,9 +39,7 @@ SatelliteNetDevice::SatelliteNetDevice ()
     m_linkUp (false)
 {
   NS_LOG_FUNCTION (this);
-  m_queue = CreateObject<DropTailQueue<Packet> > ();
-  m_address = Mac48Address::Allocate ();
-  //cout << this << "MAC Address: " << m_address << endl;
+  m_queue = CreateObject<DropTailQueue<Packet>> ();
   m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &> ();
 }
 
@@ -64,10 +55,9 @@ SatelliteNetDevice::SetIfIndex (const uint32_t index)
 }
 
 void
-SatelliteNetDevice::SetDataRate (DataRate bps)
+SatelliteNetDevice::SetDataRate (DataRate m_bps)
 {
-  this->bps = bps;
-  cout << this->bps.GetBitRate() / 1000000 << endl;
+  m_bps = bps;
 }
 
 Ptr<Queue<Packet> >
@@ -99,7 +89,6 @@ void
 SatelliteNetDevice::SetAddress (Address address)
 {
   m_address = Mac48Address::ConvertFrom (address);
-  cout << "MAC Address was set: " << m_address << endl;
 }
 
 Address
@@ -124,7 +113,6 @@ SatelliteNetDevice::SupportsSendFrom (void) const
 void
 SatelliteNetDevice::SetPromiscReceiveCallback (NetDevice::PromiscReceiveCallback cb)
 {
-  return;
 }
 
 Address
@@ -193,7 +181,6 @@ SatelliteNetDevice::Send (Ptr<Packet> packet, const Address &dst, uint16_t proto
 bool
 SatelliteNetDevice::TX ()
 {
-
     if (m_queue->GetNPackets () == 0) {
       m_txMachineState = READY;
       return true;
@@ -205,16 +192,17 @@ SatelliteNetDevice::TX ()
     EthernetHeader ethernetHeader;
     m_currentPkt->PeekHeader (ethernetHeader);
     Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize ());
-    this->m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
+    m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
     m_txEvent = Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
     return true;
 }
 
-    DataRate SatelliteNetDevice::GetDataRate() {
-        return bps;
-    }
+DataRate
+SatelliteNetDevice::GetDataRate() {
+    return bps;
+}
 
-    bool
+bool
 SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol)
 {
   m_protocol = protocol;
@@ -226,17 +214,13 @@ SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t pr
 
 bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
 {
-
   EthernetHeader eh;
   LlcSnapHeader llc;
-
   packet->PeekHeader (eh);
   packet->PeekHeader (llc);
   Mac48Address from = eh.GetSource ();
   Mac48Address dst = eh.GetDestination ();
   packet->RemoveHeader (eh);
-  //cout << dst << " " << Mac48Address::ConvertFrom(m_address) << endl;
-
   NetDevice::PacketType type;
   if (dst.IsBroadcast ())
     {
@@ -258,32 +242,32 @@ bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
   if (type != NetDevice::PACKET_OTHERHOST)
     {
       packet->RemoveHeader (llc);
-      NS_ASSERT (!m_forwardUp.IsNull ());
+      NS_ASSERT (!m_forwardUp.IsNull());
       m_forwardUp (this, packet, llc.GetType (), from);
     }
   return true;
 }
 
 bool
-SatelliteNetDevice::IsMulticast (void) const
+SatelliteNetDevice::IsMulticast () const
 {
   return true;
 }
 
 bool
-SatelliteNetDevice::IsBroadcast (void) const
+SatelliteNetDevice::IsBroadcast () const
 {
   return true;
 }
 
 Address
-SatelliteNetDevice::GetBroadcast (void) const
+SatelliteNetDevice::GetBroadcast () const
 {
   return Mac48Address::GetBroadcast ();
 }
 
 bool
-SatelliteNetDevice::IsLinkUp (void) const
+SatelliteNetDevice::IsLinkUp () const
 {
   return m_linkUp;
 }
@@ -296,20 +280,20 @@ SatelliteNetDevice::SetMtu (const uint16_t mtu)
 }
 
 uint32_t
-SatelliteNetDevice::GetIfIndex (void) const
+SatelliteNetDevice::GetIfIndex () const
 {
   return 0;
 }
 
 
 bool
-SatelliteNetDevice::IsBridge (void) const
+SatelliteNetDevice::IsBridge () const
 {
   return false;
 }
 
 bool
-SatelliteNetDevice::IsPointToPoint (void) const
+SatelliteNetDevice::IsPointToPoint () const
 {
   return false;
 }
@@ -344,8 +328,9 @@ void SatelliteNetDevice::SetInterframeGap (Time &m_tInterframeGap)
   SatelliteNetDevice::m_InterframeGap = m_tInterframeGap;
 }
 
-vector<Ptr<NetDevice>> SatelliteNetDevice::GetCommunicationNeighbors() const {
-    vector<Ptr<NetDevice>> neighbors;
+
+std::vector<Ptr<NetDevice>> SatelliteNetDevice::GetCommunicationNeighbors() const {
+    std::vector<Ptr<NetDevice>> neighbors;
     //For debug purposes we don't change the links.
     double currentSecond = 0;
     //We need to know current net device id, so:
@@ -362,6 +347,24 @@ vector<Ptr<NetDevice>> SatelliteNetDevice::GetCommunicationNeighbors() const {
         }
     }
     return neighbors;
+}
+
+//Trying to implement GetNeighbours method with SatelliteNetDevice instead of NetDevice.
+std::vector<Ptr<SatelliteNetDevice>> SatelliteNetDevice::GetNeighbours(Time momentOfTime) const {
+    std::vector<Ptr<SatelliteNetDevice>> neighbors;
+    //We need to know current net device id, so:
+    uint32_t currentIndex = 0;
+    for(uint32_t i = 0; i < m_channel->GetNDevices(); i++) {
+        if(m_channel->GetDevice(i)->GetAddress() == m_address)
+            currentIndex = i;
+    }
+    std::vector<bool> links = m_channel->GetLinks()[momentOfTime.GetSeconds()][currentIndex];
+    for(uint32_t i = 0; i < links.size(); i++) {
+        if(i != currentIndex && links[i] == true) {
+            neighbors.push_back(m_channel->GetDevice(i));
+        }
+    }
+    return std::vector<Ptr<SatelliteNetDevice>>();
 }
 
 }

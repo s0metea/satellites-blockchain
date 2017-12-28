@@ -18,7 +18,7 @@ public:
   *
   * \return The TypeId for this class
   */
-  static TypeId GetTypeId (void);
+  static TypeId GetTypeId ();
 
   /**
   * \brief Create a SatelliteChannel
@@ -28,12 +28,12 @@ public:
   */
   SatelliteChannel ();
 
-  ~SatelliteChannel ();
+  ~SatelliteChannel () override;
 
   /**
   * \returns the number of NetDevices connected to this Channel.
   */
-  uint32_t GetNDevices () const;
+  uint32_t GetNDevices () const override;
 
   /**
   * \param i index of NetDevice to retrieve
@@ -75,8 +75,7 @@ private:
   //!< List of SatNetDevices connected to this SatNetChannel
   typedef std::vector<Ptr<SatelliteNetDevice> > NetList;
   NetList netDeviceList;
-  std::vector<std::vector<std::vector<bool>>> links;
+  std::vector<std::vector<std::vector<bool>>> m_links;
 };
 }
-
 #endif //SAT_CHANNEL_H

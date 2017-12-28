@@ -7,8 +7,6 @@
 #include <ns3/satellite-net-device.h>
 #include "satellite-channel.h"
 
-using namespace std;
-
 namespace ns3 {
 
     NS_LOG_COMPONENT_DEFINE ("ns3::SatelliteChannel");
@@ -20,13 +18,6 @@ namespace ns3 {
         static TypeId tid = TypeId("ns3::SatelliteChannel")
                 .SetParent<Channel>()
                 .SetGroupName("Channel");
-#if 0
-        .AddAttribute ("PropagationDelayModel",
-                       "A pointer to the propagation delay model attached to this channel.",
-                       PointerValue (),
-                       MakePointerAccessor (&SatelliteChannel::m_delay),
-                       MakePointerChecker<PropagationDelayModel> ());
-#endif
         return tid;
     }
 
@@ -44,7 +35,6 @@ namespace ns3 {
 
     void
     SatelliteChannel::Add(Ptr<SatelliteNetDevice> device) {
-        cout << "Adding netDevice, address = " << device->GetAddress() << endl;
         netDeviceList.push_back(device);
     }
 
@@ -63,32 +53,33 @@ namespace ns3 {
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
         NS_ASSERT (senderMobility != 0);
         NS_ASSERT (m_delay);
-        //std::cout << "Device list size " << netDeviceList.size() << std::endl;
-        for (NetList::iterator netDevice = netDeviceList.begin(); netDevice != netDeviceList.end(); netDevice++) {
-            //std::cout << "SAT Channel " << sender->GetAddress() << " " << (*netDevice)->GetAddress() << endl;
-            if (sender->GetAddress() != (*netDevice)->GetAddress()) {
-                NS_ASSERT ((*netDevice)->GetNode() != 0);
-                Ptr<MobilityModel> receiverMobility = (*netDevice)->GetNode()->GetObject<MobilityModel>();
+        NS_ASSERT (m_links.size());
+        std::vector<Ptr<NetDevice>> neighbors = sender->GetCommunicationNeighbors();
+        for (auto &device : neighbors) {
+                NS_ASSERT (device->GetNode() != 0);
+                Ptr<MobilityModel> receiverMobility = device->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT (receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
-//                NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode()->GetId()
-//                                                       << " --> Node" << (*netDevice)->GetNode()->GetId()
-//                                                       << " = " << delay);
-//                NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility) << endl);
-                Simulator::ScheduleWithContext((*netDevice)->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
-                                               (*netDevice), packet->Copy(), sender->GetAddress(), protocol);
-            }
+                NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode()->GetId()
+                                                       << " --> Node" << device->GetNode()->GetId()
+                                                       << " = " << delay);
+                NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility));
+                Simulator::ScheduleWithContext(device->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
+                                               device,
+                                               packet->Copy(),
+                                               sender->GetAddress(),
+                                               protocol);
         }
     }
 
     std::vector<std::vector<std::vector<bool>>>
     SatelliteChannel::GetLinks() {
-        return links;
+        return m_links;
     }
 
     void
-    SatelliteChannel::SetLinks(vector<vector<vector<bool>>> links) {
-        this->links = links;
+    SatelliteChannel::SetLinks(std::vector<std::vector<std::vector<bool>>> links) {
+        m_links = links;
     }
 
 }

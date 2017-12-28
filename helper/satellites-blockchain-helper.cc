@@ -18,6 +18,7 @@ namespace ns3 {
         nodes.Create(nodes_amount);
         for(uint32_t i = 0; i < nodes_amount; i++) {
             Ptr<SatelliteNetDevice> device = CreateObject<SatelliteNetDevice> ();
+            device->SetAddress(Mac48Address::Allocate ());
             device->SetDataRate(dataRate);
             device->SetInterframeGap(time);
             channel->Add(device);

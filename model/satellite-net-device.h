@@ -77,14 +77,17 @@ public:
 
   bool SupportsSendFrom (void) const;
 
-  void SetDataRate (DataRate bps);
+  void SetDataRate (DataRate m_bps);
 
   std::vector<Ptr<NetDevice>> GetCommunicationNeighbors () const;
 
-  /**
+  std::vector<Ptr<SatelliteNetDevice>> GetNeighbours(Time momentOfTime) const;
+
+
+    /**
   * \brief Dispose of the object
   */
-  void DoDispose (void);
+  void DoDispose ();
 
   bool StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol);
 
