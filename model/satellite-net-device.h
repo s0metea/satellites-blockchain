@@ -81,9 +81,6 @@ public:
 
   std::vector<Ptr<NetDevice>> GetCommunicationNeighbors () const;
 
-  std::vector<Ptr<SatelliteNetDevice>> GetNeighbours(Time momentOfTime) const;
-
-
     /**
   * \brief Dispose of the object
   */

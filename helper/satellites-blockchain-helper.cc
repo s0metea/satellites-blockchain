@@ -1,10 +1,10 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 #include <ns3/node-container.h>
-#include "satellites-blockchain-helper.h"
 #include <ns3/satellite-channel.h>
 #include <ns3/satellite-net-device.h>
 #include <ns3/core-module.h>
+#include "satellites-blockchain-helper.h"
 
 namespace ns3 {
     NodeContainer SatellitesHelper::ConfigureNodes(uint32_t nodes_amount, DataRate dataRate, Time time) {

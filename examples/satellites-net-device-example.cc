@@ -17,17 +17,19 @@
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("ns3::SatellitesExample");
+NS_LOG_COMPONENT_DEFINE("SatellitesExample");
 
-vector<vector<vector<bool>>> loadLinks(string filename){
+map<double, vector<vector<bool>>> loadLinks(string filename){
     int total_nodes = 3;
-    vector<vector<vector<bool>>> links;
+    double time = 0.0;
+    map<double, vector<vector<bool>>> links;
     vector<vector<bool>> nodes;
     vector<bool> single_node;
     ifstream links_file;
     bool val;
     links_file.open(filename.c_str(), ios_base::in);
     while(links_file >> val) {
+        links_file >> time;
         for(int i = 0; i < total_nodes; i++) {
             for (int j = 0; j < total_nodes; j++) {
                 links_file >> val;
@@ -36,17 +38,17 @@ vector<vector<vector<bool>>> loadLinks(string filename){
             nodes.push_back(single_node);
             single_node.clear();
         }
-        links.push_back(nodes);
+        links.insert(std::pair<double, vector<vector<bool>>>(time, nodes));
         nodes.clear();
     }
-    cout << "Links size: " << links.size() << endl;
     links_file.close();
     return links;
 }
 
 int 
 main(int argc, char *argv[]) {
-	string mobilityTracePath;
+    //LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_DEBUG);
+    string mobilityTracePath;
 	string linksPath;
 	string linksTimeFrame;
 	uint32_t maxBytes = 0;
@@ -58,11 +60,6 @@ main(int argc, char *argv[]) {
     cmd.AddValue("linksTimeFrame", "Links time frame", linksTimeFrame);
     cmd.Parse (argc,argv);
 
-    LogComponentEnable ("ns3::SatelliteNetDevice", LOG_ALL);
-    LogComponentEnable ("ns3::SatelliteChannel", LOG_ALL);
-    LogComponentEnable ("ns3::SatellitesExample", LOG_ALL);
-    LogComponentEnable ("Ns2MobilityHelper", LOG_ALL);
-
 	NS_LOG_INFO ("Objects creation");
 	NodeContainer nodes;
 	SatellitesHelper satHelper;
@@ -72,8 +69,7 @@ main(int argc, char *argv[]) {
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
     ns2.Install (); // configure movements for each node, while reading trace file
 
-    std::vector<std::vector<std::vector<bool>>> links;
-
+    std::map<double, std::vector<std::vector<bool>>> links;
     if(!linksPath.empty()) {
         links = loadLinks(linksPath);
         satHelper.getM_channel()->SetLinks(links);
@@ -92,18 +88,13 @@ main(int argc, char *argv[]) {
     V4PingHelper ping (interfaces.GetAddress (2));
     ping.SetAttribute ("Verbose", BooleanValue (true));
     ApplicationContainer p = ping.Install (nodes.Get (0));
-    p.Start (Seconds (0.001));
-    p.Stop (Seconds (400));
+    p.Start (Seconds (5));
+    p.Stop (Seconds (100));
 
-    qemunet::Task task1 ("ping: qemu-1 -> qemu-3");
-    task1.AddCommand ("qemu-1", "ping -c 30 10.0.0.3; route -n");
-    std::string input ("/home/mike/ns-3-dev/src/satellites-blockchain/examples/small.ffs");
-    Ptr<qemunet::TopologyHelper> qn = CreateObjectWithAttributes<qemunet::TopologyHelper> ("AutoStartServices", BooleanValue (true));
-    qn->Create (input, task1.StartCallback ());
 
     //7. GO!
     lrr::GlobalGraph::Instance ()->Start ();
-    Simulator::Stop (Seconds (500));
+    Simulator::Stop (Seconds (150));
     Simulator::Run ();
 
     lrr::GlobalGraph::Instance ()->Stop ();

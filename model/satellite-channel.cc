@@ -54,9 +54,11 @@ namespace ns3 {
         NS_ASSERT (senderMobility != 0);
         NS_ASSERT (m_delay);
         NS_ASSERT (m_links.size());
-        std::vector<Ptr<NetDevice>> neighbors = sender->GetCommunicationNeighbors();
-        for (auto &device : neighbors) {
+        std::vector<Ptr<NetDevice>> neighbours = sender->GetCommunicationNeighbors();
+        for (Ptr<NetDevice> device : neighbours) {
+                Ptr<SatelliteNetDevice> dst = device->GetObject<SatelliteNetDevice>();
                 NS_ASSERT (device->GetNode() != 0);
+                NS_ASSERT (sender != device);
                 Ptr<MobilityModel> receiverMobility = device->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT (receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
@@ -64,21 +66,21 @@ namespace ns3 {
                                                        << " --> Node" << device->GetNode()->GetId()
                                                        << " = " << delay);
                 NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility));
-                Simulator::ScheduleWithContext(device->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
-                                               device,
+                Simulator::ScheduleWithContext(dst->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
+                                               dst,
                                                packet->Copy(),
                                                sender->GetAddress(),
                                                protocol);
         }
     }
 
-    std::vector<std::vector<std::vector<bool>>>
+    std::map<double, std::vector<std::vector<bool>>>
     SatelliteChannel::GetLinks() {
         return m_links;
     }
 
     void
-    SatelliteChannel::SetLinks(std::vector<std::vector<std::vector<bool>>> links) {
+    SatelliteChannel::SetLinks(std::map<double, std::vector<std::vector<bool>>> links) {
         m_links = links;
     }
 

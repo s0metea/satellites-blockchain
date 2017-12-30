@@ -1,6 +1,7 @@
 #ifndef SAT_CHANNEL_H
 #define SAT_CHANNEL_H
 
+#include <map>
 #include <ns3/node.h>
 #include <ns3/channel.h>
 #include <ns3/nstime.h>
@@ -65,17 +66,17 @@ public:
   */
   void Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender);
 
-  std::vector<std::vector<std::vector<bool>>> GetLinks();
-  void SetLinks(std::vector<std::vector<std::vector<bool>>> links);
+  std::map<double, std::vector<std::vector<bool>>> GetLinks();
+  void SetLinks(std::map<double, std::vector<std::vector<bool>>> links);
 
 private:
   SatelliteChannel (SatelliteChannel const &);
   SatelliteChannel& operator= (SatelliteChannel const &);
   Ptr<PropagationDelayModel> m_delay;       //!< Propagation delay model
   //!< List of SatNetDevices connected to this SatNetChannel
-  typedef std::vector<Ptr<SatelliteNetDevice> > NetList;
+  typedef std::vector<Ptr<SatelliteNetDevice>> NetList;
   NetList netDeviceList;
-  std::vector<std::vector<std::vector<bool>>> m_links;
+  std::map<double, std::vector<std::vector<bool>>> m_links;
 };
 }
 #endif //SAT_CHANNEL_H
