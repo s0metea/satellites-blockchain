@@ -40,7 +40,7 @@ public:
   * \param i index of NetDevice to retrieve
   * \returns one of the NetDevices connected to this channel.
   */
-  Ptr<NetDevice> GetDevice (uint32_t i) const;
+  Ptr<NetDevice> GetDevice (uint32_t i) const override;
 
   /**
   * Adds the given SatNetDevice to the NetDevice list

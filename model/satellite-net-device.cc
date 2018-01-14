@@ -271,7 +271,26 @@ namespace ns3 {
 
     bool SatelliteNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest,
                                       uint16_t protocolNumber) {
-        return false;
+        m_protocol = protocolNumber;
+
+        //LLCHeader:
+        LlcSnapHeader llc;
+        llc.SetType(protocolNumber);
+        packet->AddHeader(llc);
+
+        //EthernetHeader:
+        EthernetHeader ethernetHeader;
+        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dest));
+        ethernetHeader.SetSource(Mac48Address::ConvertFrom(source));
+
+        packet->AddHeader(ethernetHeader);
+
+        m_queue->Enqueue(packet);
+
+        if (m_txMachineState == READY) {
+            TX();
+        }
+        return true;
     }
 
     Time SatelliteNetDevice::GetInterframeGap() {
@@ -295,7 +314,7 @@ namespace ns3 {
         //Choosing current time frame and current net device:
         std::vector<bool> links = m_channel->GetLinks().find(time)->second[currentIndex];
         for (uint32_t i = 0; i < links.size(); i++) {
-            if (i != currentIndex && links[i] == true) {
+            if (i != currentIndex && links[i]) {
                 neighbors.push_back(m_channel->GetDevice(i));
             }
         }
