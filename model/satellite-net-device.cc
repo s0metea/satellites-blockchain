@@ -94,7 +94,7 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::SupportsSendFrom(void) const {
-        return false;
+        return true;
     }
 
     void
