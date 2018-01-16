@@ -10,8 +10,9 @@
 #include <ns3/packet-sink-helper.h>
 #include <ns3/low-resolution-radio-module.h>
 #include <ns3/flow-monitor-module.h>
+#include "ns3/csma-module.h"
+#include "ns3/tap-bridge-module.h"
 #include <ns3/v4ping-helper.h>
-#include <ns3/qemunet-module.h>
 #include <ns3/satellites-blockchain-helper.h>
 
 using namespace ns3;
@@ -45,7 +46,7 @@ map<double, vector<vector<bool>>> loadLinks(string filename){
     return links;
 }
 
-int 
+int
 main(int argc, char *argv[]) {
     //LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_DEBUG);
     string mobilityTracePath;
@@ -80,21 +81,36 @@ main(int argc, char *argv[]) {
     LrrRoutingHelper lrrRouting;
     internet.SetRoutingHelper (lrrRouting);
     internet.Install (nodes);
-    Ipv4AddressHelper ipAddrs;
-    ipAddrs.SetBase ("10.0.0.0", "255.255.255.0");
-    Ipv4InterfaceContainer interfaces = ipAddrs.Assign (satHelper.getM_netDevices());
+//    Ipv4AddressHelper ipAddrs;
+//    ipAddrs.SetBase ("10.0.0.0", "255.255.255.0");
+//    Ipv4InterfaceContainer interfaces = ipAddrs.Assign (satHelper.getM_netDevices());
 
-    //6. Install applications (ping)
-    V4PingHelper ping (interfaces.GetAddress (2));
-    ping.SetAttribute ("Verbose", BooleanValue (true));
-    ApplicationContainer p = ping.Install (nodes.Get (0));
-    p.Start (Seconds (5));
-    p.Stop (Seconds (100));
+//    //6. Install applications (ping)
+//    V4PingHelper ingp (interfaces.GetAddress (2));
+//    ping.SetAttribute ("Verbose", BooleanValue (true));
+//    ApplicationContainer p = ping.Install (nodes.Get (0));
+//    p.Start (Seconds (5));
+//    p.Stop (Seconds (100));
 
+    //
+    // Use the TapBridgeHelper to connect to the pre-configured tap devices for
+    // the left side.  We go with "UseBridge" mode.
+    //
+    TapBridgeHelper tapBridge;
+    tapBridge.SetAttribute ("Mode", StringValue ("UseBridge"));
+    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-left"));
+    tapBridge.Install (nodes.Get (0), satHelper.getM_netDevices().Get (0));
+
+    //
+    // Connect the right side tap to the right side CSMA device on the right-side
+    // ghost node.
+    //
+    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-right"));
+    tapBridge.Install (nodes.Get (1), satHelper.getM_netDevices().Get (1));
 
     //7. GO!
     lrr::GlobalGraph::Instance ()->Start ();
-    Simulator::Stop (Seconds (150));
+    Simulator::Stop (Seconds (650));
     Simulator::Run ();
 
     lrr::GlobalGraph::Instance ()->Stop ();
@@ -103,3 +119,4 @@ main(int argc, char *argv[]) {
     NS_LOG_INFO ("Done.");
 	return 0;
 }
+

@@ -30,4 +30,4 @@ target_link_libraries(${PROJECT_NAME}
         ns3-dev-applications-debug
         ns3-dev-propagation-debug
         ns3-dev-low-resolution-radio-debug
-        ns3-dev-qemunet-debug)
+        ns3-dev-tap-bridge-debug)
