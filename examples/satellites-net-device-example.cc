@@ -48,7 +48,9 @@ map<double, vector<vector<bool>>> loadLinks(string filename){
 
 int
 main(int argc, char *argv[]) {
-    //LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_DEBUG);
+    LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_DEBUG);
+    LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_DEBUG);
+
     string mobilityTracePath;
 	string linksPath;
 	string linksTimeFrame;
@@ -61,10 +63,18 @@ main(int argc, char *argv[]) {
     cmd.AddValue("linksTimeFrame", "Links time frame", linksTimeFrame);
     cmd.Parse (argc,argv);
 
-	NS_LOG_INFO ("Objects creation");
+    //
+    // We are interacting with the outside, real, world.  This means we have to
+    // interact in real-time and therefore means we have to use the real-time
+    // simulator and take the time to calculate checksums.
+    //
+    GlobalValue::Bind ("SimulatorImplementationType", StringValue ("ns3::RealtimeSimulatorImpl"));
+    GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
+
+    NS_LOG_INFO ("Objects creation");
 	NodeContainer nodes;
 	SatellitesHelper satHelper;
-    nodes = satHelper.ConfigureNodes(3, DataRate ("100MB/s"), Time(0));
+    nodes = satHelper.ConfigureNodes(2, DataRate ("100MB/s"), Time(0));
 
     NS_LOG_INFO ("Mobility setup");
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
@@ -78,42 +88,34 @@ main(int argc, char *argv[]) {
 
     //5. Install internet stack and routing:
     InternetStackHelper internet;
-    LrrRoutingHelper lrrRouting;
-    internet.SetRoutingHelper (lrrRouting);
     internet.Install (nodes);
-//    Ipv4AddressHelper ipAddrs;
-//    ipAddrs.SetBase ("10.0.0.0", "255.255.255.0");
-//    Ipv4InterfaceContainer interfaces = ipAddrs.Assign (satHelper.getM_netDevices());
 
-//    //6. Install applications (ping)
-//    V4PingHelper ingp (interfaces.GetAddress (2));
-//    ping.SetAttribute ("Verbose", BooleanValue (true));
-//    ApplicationContainer p = ping.Install (nodes.Get (0));
-//    p.Start (Seconds (5));
-//    p.Stop (Seconds (100));
+
+    //LrrRoutingHelper lrrRouting;
+    //internet.SetRoutingHelper (lrrRouting);
 
     //
-    // Use the TapBridgeHelper to connect to the pre-configured tap devices for
+    // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices for
     // the left side.  We go with "UseBridge" mode.
     //
     TapBridgeHelper tapBridge;
-    tapBridge.SetAttribute ("Mode", StringValue ("UseBridge"));
-    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-left"));
+    tapBridge.SetAttribute ("Mode", StringValue ("ConfigureLocal"));
+    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-1"));
     tapBridge.Install (nodes.Get (0), satHelper.getM_netDevices().Get (0));
 
     //
-    // Connect the right side tap to the right side CSMA device on the right-side
+    // Connect the right side tap to the right side device on the right-side
     // ghost node.
     //
-    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-right"));
+    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-2"));
     tapBridge.Install (nodes.Get (1), satHelper.getM_netDevices().Get (1));
 
     //7. GO!
-    lrr::GlobalGraph::Instance ()->Start ();
+    //lrr::GlobalGraph::Instance ()->Start ();
     Simulator::Stop (Seconds (650));
     Simulator::Run ();
 
-    lrr::GlobalGraph::Instance ()->Stop ();
+    //lrr::GlobalGraph::Instance ()->Stop ();
 
     Simulator::Destroy ();
     NS_LOG_INFO ("Done.");

@@ -99,6 +99,8 @@ namespace ns3 {
 
     void
     SatelliteNetDevice::SetPromiscReceiveCallback(NetDevice::PromiscReceiveCallback cb) {
+        NS_LOG_FUNCTION (&cb);
+        m_promiscRxCallback = cb;
     }
 
     Address
@@ -133,18 +135,27 @@ namespace ns3 {
 
 
     bool
-    SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dst, uint16_t protocol) {
-        m_protocol = protocol;
+    SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dest, uint16_t protocol) {
+        NS_LOG_FUNCTION (packet << dest << protocol);
+        SendFrom(packet, m_address, dest, protocol);
+        return true;
+    }
+
+    bool SatelliteNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest,
+                                      uint16_t protocolNumber) {
+        NS_LOG_FUNCTION (packet << source << dest << protocolNumber);
+
+        m_protocol = protocolNumber;
 
         //LLCHeader:
         LlcSnapHeader llc;
-        llc.SetType(protocol);
+        llc.SetType(protocolNumber);
         packet->AddHeader(llc);
 
         //EthernetHeader:
         EthernetHeader ethernetHeader;
-        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dst));
-        ethernetHeader.SetSource(Mac48Address::ConvertFrom(m_address));
+        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dest));
+        ethernetHeader.SetSource(Mac48Address::ConvertFrom(source));
 
         packet->AddHeader(ethernetHeader);
 
@@ -267,30 +278,6 @@ namespace ns3 {
         m_node = 0;
         m_channel = 0;
         m_queue = 0;
-    }
-
-    bool SatelliteNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest,
-                                      uint16_t protocolNumber) {
-        m_protocol = protocolNumber;
-
-        //LLCHeader:
-        LlcSnapHeader llc;
-        llc.SetType(protocolNumber);
-        packet->AddHeader(llc);
-
-        //EthernetHeader:
-        EthernetHeader ethernetHeader;
-        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dest));
-        ethernetHeader.SetSource(Mac48Address::ConvertFrom(source));
-
-        packet->AddHeader(ethernetHeader);
-
-        m_queue->Enqueue(packet);
-
-        if (m_txMachineState == READY) {
-            TX();
-        }
-        return true;
     }
 
     Time SatelliteNetDevice::GetInterframeGap() {

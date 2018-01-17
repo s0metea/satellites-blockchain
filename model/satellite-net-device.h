@@ -62,7 +62,7 @@ public:
 
   bool IsBridge (void) const;
 
-  bool Send (Ptr<Packet> packet, const Address &to, uint16_t protocol);
+  bool Send (Ptr<Packet> packet, const Address &dest, uint16_t protocol);
 
   bool SendFrom (Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber);
 
@@ -148,6 +148,11 @@ private:
   Ptr<DropTailQueue<Packet> > m_queue;
 
   NetDevice::ReceiveCallback m_forwardUp;   //!< forward up callback
+
+  /**
+   * The callback used to notify higher layers that a packet has been received in promiscuous mode.
+   */
+  NetDevice::PromiscReceiveCallback m_promiscRxCallback;
 
   /**
   * \brief Copy constructor
