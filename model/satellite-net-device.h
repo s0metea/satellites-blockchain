@@ -7,6 +7,7 @@
 #include <ns3/net-device.h>
 #include <ns3/lrr-device.h>
 #include <ns3/callback.h>
+#include <ns3/traced-callback.h>
 
 namespace ns3 {
 
@@ -149,10 +150,15 @@ private:
 
   NetDevice::ReceiveCallback m_forwardUp;   //!< forward up callback
 
-  /**
+   /**
    * The callback used to notify higher layers that a packet has been received in promiscuous mode.
    */
   NetDevice::PromiscReceiveCallback m_promiscRxCallback;
+
+    /**
+    * List of callbacks to fire if the link changes state (up or down).
+    */
+    TracedCallback<> m_linkChangeCallbacks;
 
   /**
   * \brief Copy constructor

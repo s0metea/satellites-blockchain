@@ -192,6 +192,7 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol) {
+        NS_LOG_FUNCTION (packet << src << protocol);
         m_protocol = protocol;
         Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(packet->GetSize());
         Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
@@ -200,6 +201,7 @@ namespace ns3 {
 
 
     bool SatelliteNetDevice::ForwardUp(Ptr<Packet> packet) {
+        NS_LOG_FUNCTION (packet);
         EthernetHeader eh;
         LlcSnapHeader llc;
         packet->PeekHeader(eh);
@@ -269,7 +271,8 @@ namespace ns3 {
     }
 
     void SatelliteNetDevice::AddLinkChangeCallback(Callback<void> callback) {
-
+        NS_LOG_FUNCTION (&callback);
+        m_linkChangeCallbacks.ConnectWithoutContext (callback);
     }
 
     void

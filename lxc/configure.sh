@@ -5,10 +5,10 @@ for i in `seq 1 $1`;
 		# Create the bridges we referenced in the conf files:
 		brctl addbr br-$i
 
-		# Create the tap devices that ns-3 will use to get packets 			# from the bridges into its process
+		# Create the tap devices that ns-3 will use to get packets from the bridges into its process
 		tunctl -t tap-$i
 
-		# Set their IP addresses to 0.0.0.0 and bring them up
+		# Set their IP, MAC addresses and bring them up
 		ifconfig tap-$i 10.0.0.$i netmask 255.255.255.0 up
         ifconfig tap-$i hw ether 00:00:00:00:00:0$i # TODO
 
