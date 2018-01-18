@@ -9,7 +9,9 @@ for i in `seq 1 $1`;
 		tunctl -t tap-$i
 
 		# Set their IP addresses to 0.0.0.0 and bring them up
-		ifconfig tap-$i 0.0.0.0 promisc up
+		ifconfig tap-$i 10.0.0.$i netmask 255.255.255.0 up
+        ifconfig tap-$i hw ether 00:00:00:00:00:0$i # TODO
+
 
 		# Add the tap devices you just created to their respective 			# bridges
 		brctl addif br-$i tap-$i
