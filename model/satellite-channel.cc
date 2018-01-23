@@ -74,14 +74,18 @@ namespace ns3 {
         }
     }
 
-    std::map<double, std::vector<std::vector<bool>>>
+    SatelliteChannel::Links::Links(Time time, std::vector<std::vector<bool>> links) {
+        m_time = time;
+        m_links = links;
+    }
+
+    std::vector<SatelliteChannel::Links>
     SatelliteChannel::GetLinks() {
         return m_links;
     }
 
     void
-    SatelliteChannel::SetLinks(std::map<double, std::vector<std::vector<bool>>> links) {
+    SatelliteChannel::SetLinks(std::vector<SatelliteChannel::Links> links) {
         m_links = links;
     }
-
 }

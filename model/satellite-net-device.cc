@@ -136,14 +136,14 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::Send(Ptr<Packet> packet, const Address &dest, uint16_t protocol) {
-        NS_LOG_FUNCTION (packet << dest << protocol);
+        NS_LOG_FUNCTION (this << packet << dest << protocol);
         SendFrom(packet, m_address, dest, protocol);
         return true;
     }
 
     bool SatelliteNetDevice::SendFrom(Ptr<Packet> packet, const Address &source, const Address &dest,
                                       uint16_t protocolNumber) {
-        NS_LOG_FUNCTION (packet << source << dest << protocolNumber);
+        NS_LOG_FUNCTION (this << packet << source << dest << protocolNumber);
 
         m_protocol = protocolNumber;
 
@@ -192,7 +192,7 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol) {
-        NS_LOG_FUNCTION (packet << src << protocol);
+        NS_LOG_FUNCTION (this << packet << src << protocol);
         m_protocol = protocol;
         Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(packet->GetSize());
         Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
@@ -271,7 +271,7 @@ namespace ns3 {
     }
 
     void SatelliteNetDevice::AddLinkChangeCallback(Callback<void> callback) {
-        NS_LOG_FUNCTION (&callback);
+        NS_LOG_FUNCTION (this << &callback);
         m_linkChangeCallbacks.ConnectWithoutContext (callback);
     }
 
@@ -293,21 +293,35 @@ namespace ns3 {
 
 
     std::vector<Ptr<NetDevice>> SatelliteNetDevice::GetCommunicationNeighbors() const {
+        NS_LOG_FUNCTION (this);
         std::vector<Ptr<NetDevice>> neighbors;
-        double time = 0.0;
+        Time time = Time(0);
+        //double time = Simulator::Now().GetSeconds();
         //We need to know current net device id, so:
         uint32_t currentIndex = 0;
         for (uint32_t i = 0; i < m_channel->GetNDevices(); i++) {
             if (m_channel->GetDevice(i)->GetAddress() == m_address)
                 currentIndex = i;
         }
-        //Choosing current time frame and current net device:
-        std::vector<bool> links = m_channel->GetLinks().find(time)->second[currentIndex];
+        //Searching for the nearest time in links:
+        std::vector<bool> links;
+        std::vector<SatelliteChannel::Links> all_links = m_channel->GetLinks();
+
+        //Below we try to find the closest time
+        //ToDo: Binary search
+        for (std::vector<SatelliteChannel::Links>::iterator it = all_links.begin() ; it != all_links.end(); ++it){
+            if((it->m_time).Compare(time) > 0) {
+                links = (it-1)->m_links.at(currentIndex);
+                break;
+            } else
+                continue;
+        }
         for (uint32_t i = 0; i < links.size(); i++) {
             if (i != currentIndex && links[i]) {
                 neighbors.push_back(m_channel->GetDevice(i));
             }
         }
+        NS_LOG_FUNCTION (neighbors.size());
         return neighbors;
     }
 }

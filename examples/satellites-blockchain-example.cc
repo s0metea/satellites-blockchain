@@ -20,32 +20,6 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE("SatellitesExample");
 
-map<double, vector<vector<bool>>> loadLinks(string filename){
-    int total_nodes = 3;
-    double time = 0.0;
-    map<double, vector<vector<bool>>> links;
-    vector<vector<bool>> nodes;
-    vector<bool> single_node;
-    ifstream links_file;
-    bool val;
-    links_file.open(filename.c_str(), ios_base::in);
-    while(links_file >> val) {
-        links_file >> time;
-        for(int i = 0; i < total_nodes; i++) {
-            for (int j = 0; j < total_nodes; j++) {
-                links_file >> val;
-                single_node.push_back(val);
-            }
-            nodes.push_back(single_node);
-            single_node.clear();
-        }
-        links.insert(std::pair<double, vector<vector<bool>>>(time, nodes));
-        nodes.clear();
-    }
-    links_file.close();
-    return links;
-}
-
 int
 main(int argc, char *argv[]) {
     LogComponentEnable("TapBridge", LOG_LEVEL_INFO);
@@ -76,29 +50,28 @@ main(int argc, char *argv[]) {
     NS_LOG_INFO ("Objects creation");
 	NodeContainer nodes;
 	SatellitesHelper satHelper;
-    nodes = satHelper.ConfigureNodes(2, DataRate ("100MB/s"), Time(0));
+    int totalNodesAmount = 2;
+    nodes = satHelper.ConfigureNodes(totalNodesAmount, DataRate ("100MB/s"), Time(0));
 
     NS_LOG_INFO ("Mobility setup");
     Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
     ns2.Install (); // configure movements for each node, while reading trace file
 
-    std::map<double, std::vector<std::vector<bool>>> links;
+    std::vector<SatelliteChannel::Links> links;
     if(!linksPath.empty()) {
-        links = loadLinks(linksPath);
+        links = satHelper.LoadLinks(linksPath, totalNodesAmount);
         satHelper.getM_channel()->SetLinks(links);
     }
 
     //5. Install internet stack and routing:
     InternetStackHelper internet;
     internet.Install (nodes);
-
     Ipv4AddressHelper addresses;
     addresses.SetBase ("10.0.0.0", "255.255.255.0");
     Ipv4InterfaceContainer interfaces = addresses.Assign (satHelper.getM_netDevices());
 
-    //LrrRoutingHelper lrrRouting;
-    //internet.SetRoutingHelper (lrrRouting);
-
+    LrrRoutingHelper lrrRouting;
+    internet.SetRoutingHelper (lrrRouting);
 
     // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices.
     TapBridgeHelper tapBridge;

@@ -11,7 +11,7 @@ class SatellitesHelper {
 public:
     NodeContainer ConfigureNodes(uint32_t nodes_amount, DataRate dataRate, Time time);
     const Ptr<SatelliteChannel> &getM_channel() const;
-
+    std::vector<SatelliteChannel::Links> LoadLinks(std::string filename, int totalNodes);
 private:
     Ptr<SatelliteChannel> m_channel;
     NetDeviceContainer m_netDevices;
