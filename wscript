@@ -11,7 +11,7 @@ def build(bld):
     module.source = [
         'model/satellite-channel.cc',
         'model/satellite-net-device.cc',
-        'helper/satellites-blockchain-helper.cc',
+        'helper/satellites-helper.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('satellites-blockchain')
@@ -22,7 +22,7 @@ def build(bld):
     headers.source = [
         'model/satellite-channel.h',
         'model/satellite-net-device.h',
-        'helper/satellites-blockchain-helper.h',
+        'helper/satellites-helper.h',
         ]
 
     if bld.env.ENABLE_EXAMPLES:
