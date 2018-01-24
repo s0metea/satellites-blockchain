@@ -7,7 +7,8 @@
 #include "satellites-helper.h"
 
 namespace ns3 {
-    NodeContainer SatellitesHelper::ConfigureNodes(uint32_t nodes_amount, DataRate dataRate, Time time) {
+    NodeContainer
+    SatellitesHelper::ConfigureNodes(uint32_t nodes_amount, DataRate dataRate, Time time) {
         Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
         ObjectFactory m_propagationDelay;
         m_propagationDelay.SetTypeId("ns3::ConstantSpeedPropagationDelayModel");
@@ -21,8 +22,8 @@ namespace ns3 {
             device->SetAddress(Mac48Address::Allocate ());
             device->SetDataRate(dataRate);
             device->SetInterframeGap(time);
-            channel->Add(device);
             device->SetChannel(channel);
+            channel->Add(device);
             nodes.Get(i)->AddDevice(device);
             m_netDevices.Add(device);
         }

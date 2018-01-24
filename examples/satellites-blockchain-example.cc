@@ -23,9 +23,9 @@ NS_LOG_COMPONENT_DEFINE("SatellitesExample");
 int
 main(int argc, char *argv[]) {
     LogComponentEnable("TapBridge", LOG_LEVEL_INFO);
-    //LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_DEBUG);
-    LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_DEBUG);
-    LogComponentEnable("SatellitesExample", LOG_LEVEL_DEBUG);
+    LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
+    //LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
+    LogComponentEnable("SatellitesExample", LOG_LEVEL_INFO);
 
     string mobilityTracePath;
 	string linksPath;
@@ -50,7 +50,7 @@ main(int argc, char *argv[]) {
     NS_LOG_INFO ("Objects creation");
 	NodeContainer nodes;
 	SatellitesHelper satHelper;
-    int totalNodesAmount = 2;
+    uint32_t totalNodesAmount = 2;
     nodes = satHelper.ConfigureNodes(totalNodesAmount, DataRate ("100MB/s"), Time(0));
 
     NS_LOG_INFO ("Mobility setup");
@@ -61,7 +61,11 @@ main(int argc, char *argv[]) {
     if(!linksPath.empty()) {
         links = satHelper.LoadLinks(linksPath, totalNodesAmount);
         satHelper.getM_channel()->SetLinks(links);
+        NS_LOG_INFO ("Links was loaded!");
+    } else {
+        NS_LOG_INFO ("Links wasn't loaded!");
     }
+
 
     //5. Install internet stack and routing:
     InternetStackHelper internet;
@@ -75,14 +79,16 @@ main(int argc, char *argv[]) {
 
     // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices.
     TapBridgeHelper tapBridge;
-    tapBridge.SetAttribute ("Mode", StringValue ("UseLocal"));
-    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-1"));
-    tapBridge.Install (nodes.Get (0), satHelper.getM_netDevices().Get(0));
-    tapBridge.SetAttribute ("DeviceName", StringValue ("tap-2"));
-    tapBridge.Install (nodes.Get (1), satHelper.getM_netDevices().Get (1));
+    tapBridge.SetAttribute ("Mode", StringValue ("UseBridge"));
+    for(uint64_t i = 1; i <= totalNodesAmount; i++) {
+        string deviceNameBase("tap-");
+        deviceNameBase.append(to_string(i));
+        tapBridge.SetAttribute ("DeviceName", StringValue(deviceNameBase));
+        tapBridge.Install (nodes.Get (0), satHelper.getM_netDevices().Get(0));
+    }
 
     //7. GO!
-    //lrr::GlobalGraph::Instance ()->Start ();
+    lrr::GlobalGraph::Instance ()->Start ();
     Simulator::Stop (Seconds (650));
     Simulator::Run ();
 
