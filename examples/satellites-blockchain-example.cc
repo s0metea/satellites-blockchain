@@ -66,7 +66,6 @@ main(int argc, char *argv[]) {
         NS_LOG_INFO ("Links wasn't loaded!");
     }
 
-
     //5. Install internet stack and routing:
     InternetStackHelper internet;
     internet.Install (nodes);
@@ -80,11 +79,11 @@ main(int argc, char *argv[]) {
     // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices.
     TapBridgeHelper tapBridge;
     tapBridge.SetAttribute ("Mode", StringValue ("UseBridge"));
-    for(uint64_t i = 1; i <= totalNodesAmount; i++) {
+    for(uint32_t i = 0; i < totalNodesAmount; i++) {
         string deviceNameBase("tap-");
-        deviceNameBase.append(to_string(i));
+        deviceNameBase.append(to_string(i + 1));
         tapBridge.SetAttribute ("DeviceName", StringValue(deviceNameBase));
-        tapBridge.Install (nodes.Get (0), satHelper.getM_netDevices().Get(0));
+        tapBridge.Install (nodes.Get (i), satHelper.getM_netDevices().Get(i));
     }
 
     //7. GO!

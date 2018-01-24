@@ -57,9 +57,10 @@ namespace ns3 {
         NS_ASSERT (m_links.size());
         std::vector<Ptr<NetDevice>> neighbours = sender->GetCommunicationNeighbors();
         for (Ptr<NetDevice> device : neighbours) {
-                Ptr<SatelliteNetDevice> dst = device->GetObject<SatelliteNetDevice>();
-                NS_ASSERT (device->GetNode() != 0);
-                NS_ASSERT (sender != device);
+            Ptr<SatelliteNetDevice> dst = device->GetObject<SatelliteNetDevice>();
+            NS_ASSERT (device->GetNode() != 0);
+            NS_ASSERT (sender != device);
+            if(dst->GetAddress() == to) {
                 Ptr<MobilityModel> receiverMobility = device->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT (receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
@@ -72,6 +73,7 @@ namespace ns3 {
                                                packet->Copy(),
                                                sender->GetAddress(),
                                                protocol);
+            }
         }
     }
 
