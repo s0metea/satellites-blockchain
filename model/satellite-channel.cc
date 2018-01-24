@@ -50,17 +50,17 @@ namespace ns3 {
 
     void
     SatelliteChannel::Send(Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender) {
-        NS_LOG_DEBUG (this << packet << to << sender);
+        NS_LOG_FUNCTION (this << packet << to << sender);
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
         NS_ASSERT (senderMobility != 0);
         NS_ASSERT (m_delay);
         NS_ASSERT (m_links.size());
         std::vector<Ptr<NetDevice>> neighbours = sender->GetCommunicationNeighbors();
         for (Ptr<NetDevice> device : neighbours) {
-            Ptr<SatelliteNetDevice> dst = device->GetObject<SatelliteNetDevice>();
+            Ptr<SatelliteNetDevice> neighbour = device->GetObject<SatelliteNetDevice>();
             NS_ASSERT (device->GetNode() != 0);
             NS_ASSERT (sender != device);
-            if(dst->GetAddress() == to) {
+            if(neighbour->GetAddress() == Mac48Address::ConvertFrom(to) || Mac48Address::ConvertFrom(to) == device->GetBroadcast()) {
                 Ptr<MobilityModel> receiverMobility = device->GetNode()->GetObject<MobilityModel>();
                 NS_ASSERT (receiverMobility != 0);
                 Time delay = m_delay->GetDelay(senderMobility, receiverMobility);
@@ -68,8 +68,8 @@ namespace ns3 {
                                                        << " --> Node" << device->GetNode()->GetId()
                                                        << " = " << delay);
                 NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom(receiverMobility));
-                Simulator::ScheduleWithContext(dst->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
-                                               dst,
+                Simulator::ScheduleWithContext(neighbour->GetNode()->GetId(), delay, &SatelliteNetDevice::StartRX,
+                                               neighbour,
                                                packet->Copy(),
                                                sender->GetAddress(),
                                                protocol);

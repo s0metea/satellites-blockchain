@@ -169,6 +169,7 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::TX() {
+        NS_LOG_FUNCTION (this);
         if (m_queue->GetNPackets() == 0) {
             m_txMachineState = READY;
             return true;
@@ -304,8 +305,9 @@ namespace ns3 {
         //We need to know current net device id, so:
         uint32_t currentIndex = 0;
         for (uint32_t i = 0; i < m_channel->GetNDevices(); i++) {
-            if (m_channel->GetDevice(i)->GetAddress() == m_address)
+            if (m_channel->GetDevice(i)->GetAddress() == m_address) {
                 currentIndex = i;
+            }
         }
         //Searching for the nearest time in links:
         std::vector<bool> links;
@@ -317,15 +319,13 @@ namespace ns3 {
             if((it->m_time).Compare(time) > 0) {
                 links = (it-1)->m_links.at(currentIndex);
                 break;
-            } else
-                continue;
+            }
         }
         for (uint32_t i = 0; i < links.size(); i++) {
             if (i != currentIndex && links[i]) {
                 neighbors.push_back(m_channel->GetDevice(i));
             }
         }
-        NS_LOG_FUNCTION (neighbors.size());
         return neighbors;
     }
 }
