@@ -9,13 +9,11 @@ for i in `seq 1 $1`;
 		tunctl -t tap-$i
 
 		# Set their IP, MAC addresses and bring them up
-		ifconfig tap-$i 10.0.0.$i netmask 255.255.255.0 up
-        ifconfig tap-$i hw ether 00:00:00:00:00:0$i # TODO
-
-
-		# Add the tap devices you just created to their respective 			# bridges
+        ifconfig tap-$i hw ether 00:00:00:00:00:0$i #TODO
+		ifconfig tap-$i 0.0.0.0 promisc up
+		# Add the tap devices we just created to their bridges
 		brctl addif br-$i tap-$i
-		ifconfig br-$i up
+		ifconfig tap-$i 10.0.0.$i netmask 255.255.255.0 up
 
 		# Create containers
 		lxc-create -f ./lxc-conf/lxc-$i.conf -n lxc-$i -t ubuntu
