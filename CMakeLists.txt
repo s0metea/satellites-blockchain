@@ -9,13 +9,13 @@ include_directories(/home/mike/ns-3-dev/build/)
 link_directories(/home/mike/ns-3-dev/build)
 
 set(SOURCE_FILES
-        examples/satellites-net-device-example.cc
+        examples/satellites-blockchain-example.cc
         model/satellite-net-device.cc
         model/satellite-channel.cc
         model/satellite-net-device.h
         model/satellite-channel.h
-        helper/satellites-blockchain-helper.cc
-        helper/satellites-blockchain-helper.h)
+        helper/satellites-helper.cc
+        helper/satellites-helper.h)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

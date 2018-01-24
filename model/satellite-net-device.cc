@@ -201,7 +201,7 @@ namespace ns3 {
 
 
     bool SatelliteNetDevice::ForwardUp(Ptr<Packet> packet) {
-        NS_LOG_FUNCTION (packet);
+        NS_LOG_DEBUG (this << packet);
         EthernetHeader eh;
         LlcSnapHeader llc;
         packet->PeekHeader(eh);
@@ -224,6 +224,10 @@ namespace ns3 {
             packet->RemoveHeader(llc);
             NS_ASSERT (!m_forwardUp.IsNull());
             m_forwardUp(this, packet, llc.GetType(), from);
+        }
+        if (!m_promiscRxCallback.IsNull ())
+        {
+            m_promiscRxCallback(this, packet, llc.GetType (), from, dst, type);
         }
         return true;
     }

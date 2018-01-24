@@ -5,6 +5,7 @@
 #include <ns3/data-rate.h>
 #include <ns3/satellite-channel.h>
 #include <ns3/net-device-container.h>
+#include <ns3/node-container.h>
 
 namespace ns3 {
 class SatellitesHelper {

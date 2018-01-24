@@ -8,7 +8,7 @@ Typical using:
 
 
 ## Launching examples:
-./waf --run "satellites-net-device-example --tracePath=Path/To/Trace/ --maxBytes=10000 --linksPath=Path/To/Links"
+./waf --run "satellites-blockchain-example --tracePath=Path/To/Trace/ --maxBytes=10000 --linksPath=Path/To/Links"
 
 
 ## Trace file:

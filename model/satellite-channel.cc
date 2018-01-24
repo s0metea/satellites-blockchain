@@ -50,6 +50,7 @@ namespace ns3 {
 
     void
     SatelliteChannel::Send(Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender) {
+        NS_LOG_DEBUG (this << packet << to << sender);
         Ptr<MobilityModel> senderMobility = sender->GetNode()->GetObject<MobilityModel>();
         NS_ASSERT (senderMobility != 0);
         NS_ASSERT (m_delay);
