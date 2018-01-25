@@ -147,15 +147,15 @@ namespace ns3 {
 
         m_protocol = protocolNumber;
 
+        //EthernetHeader:
+        EthernetHeader ethernetHeader(false);
+        ethernetHeader.SetSource(Mac48Address::ConvertFrom(source));
+        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dest));
+
         //LLCHeader:
         LlcSnapHeader llc;
         llc.SetType(protocolNumber);
         packet->AddHeader(llc);
-
-        //EthernetHeader:
-        EthernetHeader ethernetHeader;
-        ethernetHeader.SetDestination(Mac48Address::ConvertFrom(dest));
-        ethernetHeader.SetSource(Mac48Address::ConvertFrom(source));
 
         packet->AddHeader(ethernetHeader);
 
@@ -193,23 +193,23 @@ namespace ns3 {
 
     bool
     SatelliteNetDevice::StartRX(Ptr<Packet> packet, const Address &src, uint16_t protocol) {
-        NS_LOG_FUNCTION (this << packet << src << protocol);
+        NS_LOG_FUNCTION (this << packet << "From: " << src << "This: " << m_address << protocol);
         m_protocol = protocol;
         Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime(packet->GetSize());
+        NS_LOG_FUNCTION("Total time: " << totalTime);
         Simulator::Schedule(totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
         return true;
     }
 
 
     bool SatelliteNetDevice::ForwardUp(Ptr<Packet> packet) {
-        NS_LOG_DEBUG (this << packet);
-        EthernetHeader eh;
+        NS_LOG_DEBUG ("Device:" << m_address << " " << packet);
+        EthernetHeader eh(false);
         LlcSnapHeader llc;
-        packet->PeekHeader(eh);
-        packet->PeekHeader(llc);
+        packet->RemoveHeader(eh);
+        packet->RemoveHeader(llc);
         Mac48Address from = eh.GetSource();
         Mac48Address dst = eh.GetDestination();
-        packet->RemoveHeader(eh);
         NetDevice::PacketType type;
         if (dst.IsBroadcast()) {
             type = NetDevice::PACKET_BROADCAST;
@@ -222,10 +222,10 @@ namespace ns3 {
         }
 
         if (type != NetDevice::PACKET_OTHERHOST) {
-            packet->RemoveHeader(llc);
             NS_ASSERT (!m_forwardUp.IsNull());
             m_forwardUp(this, packet, llc.GetType(), from);
         }
+
         if (!m_promiscRxCallback.IsNull ())
         {
             m_promiscRxCallback(this, packet, llc.GetType (), from, dst, type);

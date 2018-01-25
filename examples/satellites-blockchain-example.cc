@@ -24,7 +24,7 @@ int
 main(int argc, char *argv[]) {
     LogComponentEnable("TapBridge", LOG_LEVEL_INFO);
     LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
-    //LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
+    LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
     LogComponentEnable("SatellitesExample", LOG_LEVEL_INFO);
 
     string mobilityTracePath;
