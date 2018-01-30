@@ -67,21 +67,18 @@ SatelliteChannel::Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<S
       Ptr<SatelliteNetDevice> neighbour = device->GetObject<SatelliteNetDevice>();
       NS_ASSERT (device->GetNode () != 0);
       NS_ASSERT (sender != device);
-      if(neighbour->GetAddress () == Mac48Address::ConvertFrom (to) || Mac48Address::ConvertFrom (to) == device->GetBroadcast ())
-        {
-          Ptr<MobilityModel> receiverMobility = device->GetNode ()->GetObject<MobilityModel>();
-          NS_ASSERT (receiverMobility != 0);
-          Time delay = m_delay->GetDelay (senderMobility, receiverMobility);
-          NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode ()->GetId ()
-                                                 << " --> Node" << device->GetNode ()->GetId ()
-                                                 << " = " << delay);
-          NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom (receiverMobility));
-          Simulator::ScheduleWithContext (neighbour->GetNode ()->GetId (), delay, &SatelliteNetDevice::StartRX,
-                                          neighbour,
-                                          packet->Copy (),
-                                          sender->GetAddress (),
-                                          protocol);
-        }
+      Ptr<MobilityModel> receiverMobility = device->GetNode ()->GetObject<MobilityModel>();
+      NS_ASSERT (receiverMobility != 0);
+      Time delay = m_delay->GetDelay (senderMobility, receiverMobility);
+      NS_LOG_DEBUG ("Propagation Delay Node" << sender->GetNode ()->GetId ()
+                                             << " --> Node" << device->GetNode ()->GetId ()
+                                             << " = " << delay);
+      NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom (receiverMobility));
+      Simulator::ScheduleWithContext (neighbour->GetNode ()->GetId (), delay, &SatelliteNetDevice::StartRX,
+                                      neighbour,
+                                      packet->Copy (),
+                                      sender->GetAddress (),
+                                      protocol);
     }
 }
 
