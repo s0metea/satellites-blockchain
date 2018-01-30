@@ -55,16 +55,16 @@ namespace ns3 {
         m_bps = bps;
     }
 
-    Ptr<Queue<Packet> >
-    SimpleNetDevice::GetQueue() const {
-        return m_queue;
-    }
+    //Ptr<Queue<Packet> >
+    //SimpleNetDevice::GetQueue() const {
+    //    return m_queue;
+    //}
 
-    void
-    SimpleNetDevice::SetQueue(Ptr<Queue<Packet> > q) {
-        NS_LOG_FUNCTION (this << q);
-        m_queue = q;
-    }
+    //void
+    //SatelliteNetDevice::SetQueue(Ptr<Queue<Packet> > q) {
+    //    NS_LOG_FUNCTION (this << q);
+    //    m_queue = q;
+    //}
 
     Ptr<Channel>
     SatelliteNetDevice::GetChannel(void) const {
