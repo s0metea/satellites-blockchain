@@ -10,16 +10,16 @@
 namespace ns3 {
 class SatellitesHelper {
 public:
-    NodeContainer ConfigureNodes(uint32_t nodes_amount, DataRate dataRate, Time time);
-    const Ptr<SatelliteChannel> &getM_channel() const;
-    std::vector<SatelliteChannel::Links> LoadLinks(std::string filename, int totalNodes);
+  NodeContainer ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time time);
+  const Ptr<SatelliteChannel> &getM_channel () const;
+  std::vector<SatelliteChannel::Links> LoadLinks (std::string filename, int totalNodes);
 private:
-    Ptr<SatelliteChannel> m_channel;
-    NetDeviceContainer m_netDevices;
+  Ptr<SatelliteChannel> m_channel;
+  NetDeviceContainer m_netDevices;
 public:
-    const NetDeviceContainer &getM_netDevices() const;
+  const NetDeviceContainer &getM_netDevices () const;
 
-    void setM_netDevices(const NetDeviceContainer &m_netDevices);
+  void setM_netDevices (const NetDeviceContainer &m_netDevices);
 };
 
 }

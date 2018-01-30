@@ -80,11 +80,11 @@ public:
 
   void SetDataRate (DataRate m_bps);
 
-  std::vector<Ptr<NetDevice>> GetCommunicationNeighbors () const;
+  std::vector<Ptr<NetDevice> > GetCommunicationNeighbors () const;
 
-    /**
-  * \brief Dispose of the object
-  */
+  /**
+* \brief Dispose of the object
+*/
   void DoDispose ();
 
   bool StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol);
@@ -92,7 +92,7 @@ public:
   void SetInterframeGap (Time &m_tInterframeGap);
 
   Time GetInterframeGap ();
-  DataRate GetDataRate();
+  DataRate GetDataRate ();
 
 private:
   /**
@@ -150,15 +150,15 @@ private:
 
   NetDevice::ReceiveCallback m_forwardUp;   //!< forward up callback
 
-   /**
-   * The callback used to notify higher layers that a packet has been received in promiscuous mode.
-   */
+  /**
+  * The callback used to notify higher layers that a packet has been received in promiscuous mode.
+  */
   NetDevice::PromiscReceiveCallback m_promiscRxCallback;
 
-    /**
-    * List of callbacks to fire if the link changes state (up or down).
-    */
-    TracedCallback<> m_linkChangeCallbacks;
+  /**
+  * List of callbacks to fire if the link changes state (up or down).
+  */
+  TracedCallback<> m_linkChangeCallbacks;
 
   /**
   * \brief Copy constructor
