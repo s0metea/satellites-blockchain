@@ -23,11 +23,10 @@ int main (int argc, char *argv[]) {
   LogComponentEnable ("TapBridge", LOG_LEVEL_INFO);
   LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
   LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
-  LogComponentEnable ("SatellitesExample", LOG_LEVEL_INFO);
 
   // Specify default paths for this toy example
   string mobilityTracePath = "src/satellites-blockchain/examples/mobility.trace";
-  string linksPath = "satellites-blockchain/examples/links";
+  string linksPath = "src/satellites-blockchain/examples/links";
 
   CommandLine cmd;
   cmd.AddValue ("tracePath", "Path to the NS2Mobility trace file", mobilityTracePath);
