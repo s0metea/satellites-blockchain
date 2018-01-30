@@ -54,9 +54,9 @@ SatelliteChannel::SetPropagationDelay (const Ptr<PropagationDelayModel> delay)
 }
 
 void
-SatelliteChannel::Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender)
+SatelliteChannel::Send (Ptr<Packet> packet, Ptr<SatelliteNetDevice> sender)
 {
-  NS_LOG_FUNCTION (this << packet << "From: " << sender->GetAddress () << " To: " << to);
+  NS_LOG_FUNCTION (this << packet << "From: " << sender->GetAddress ());
   Ptr<MobilityModel> senderMobility = sender->GetNode ()->GetObject<MobilityModel>();
   NS_ASSERT (senderMobility != 0);
   NS_ASSERT (m_delay);
@@ -76,9 +76,7 @@ SatelliteChannel::Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<S
       NS_LOG_DEBUG ("The distance = " << senderMobility->GetDistanceFrom (receiverMobility));
       Simulator::ScheduleWithContext (neighbour->GetNode ()->GetId (), delay, &SatelliteNetDevice::StartRX,
                                       neighbour,
-                                      packet->Copy (),
-                                      sender->GetAddress (),
-                                      protocol);
+                                      packet->Copy ());
     }
 }
 

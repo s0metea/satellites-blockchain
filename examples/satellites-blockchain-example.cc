@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
 
   // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices.
   TapBridgeHelper tapBridge;
-  tapBridge.SetAttribute ("Mode", StringValue ("UseBridge"));
+  tapBridge.SetAttribute ("Mode", StringValue ("ConfigureLocal"));
   for(uint32_t i = 0; i < nNodes; i++)
   {
       string deviceNameBase ("tap-");

@@ -154,8 +154,6 @@ bool SatelliteNetDevice::SendFrom (Ptr<Packet> packet, const Address &source, co
 {
   NS_LOG_FUNCTION (this << packet << source << dest << protocolNumber);
 
-  m_protocol = protocolNumber;
-
   //EthernetHeader:
   EthernetHeader ethernetHeader (false);
   ethernetHeader.SetSource (Mac48Address::ConvertFrom (source));
@@ -193,7 +191,7 @@ SatelliteNetDevice::TX ()
   EthernetHeader ethernetHeader;
   m_currentPkt->PeekHeader (ethernetHeader);
   Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (m_currentPkt->GetSize ());
-  m_channel->Send (m_currentPkt, m_protocol, ethernetHeader.GetDestination (), this);
+  m_channel->Send (m_currentPkt, this);
   m_txEvent = Simulator::Schedule (totalTime, &SatelliteNetDevice::TX, this);
   return true;
 }
@@ -205,12 +203,10 @@ SatelliteNetDevice::GetDataRate ()
 }
 
 bool
-SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol)
+SatelliteNetDevice::StartRX (Ptr<Packet> packet)
 {
-  NS_LOG_FUNCTION (this << packet << "From: " << src << "This: " << m_address << protocol);
-  m_protocol = protocol;
   Time totalTime = m_InterframeGap + bps.CalculateBytesTxTime (packet->GetSize ());
-  NS_LOG_FUNCTION ("Total time: " << totalTime);
+  NS_LOG_FUNCTION ("RX duration: " << totalTime);
   Simulator::Schedule (totalTime, &SatelliteNetDevice::ForwardUp, this, packet);
   return true;
 }
@@ -218,13 +214,14 @@ SatelliteNetDevice::StartRX (Ptr<Packet> packet, const Address &src, uint16_t pr
 
 bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
 {
-  NS_LOG_DEBUG ("Device:" << m_address << " " << packet);
+  NS_LOG_FUNCTION ("Device:" << m_address << " " << packet->GetUid ());
   EthernetHeader eh (false);
   LlcSnapHeader llc;
   packet->RemoveHeader (eh);
   packet->RemoveHeader (llc);
   Mac48Address from = eh.GetSource ();
   Mac48Address dst = eh.GetDestination ();
+  NS_LOG_DEBUG("Forward up: I am " << m_address << ". DST address is" << dst);
   NetDevice::PacketType type;
   if (dst.IsBroadcast ())
     {
@@ -242,13 +239,19 @@ bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
   if (type != NetDevice::PACKET_OTHERHOST)
     {
       NS_ASSERT (!m_forwardUp.IsNull ());
+      NS_LOG_DEBUG("Forward up packet UID" << packet->GetUid());
       m_forwardUp (this, packet, llc.GetType (), from);
     }
 
   if (!m_promiscRxCallback.IsNull ())
     {
+      NS_LOG_DEBUG("Promisc Forward up packet UID" << packet->GetUid());
       m_promiscRxCallback (this, packet, llc.GetType (), from, dst, type);
     }
+  else
+  {
+      NS_LOG_DEBUG("Promisc RX callback is not set");
+  }
   return true;
 }
 

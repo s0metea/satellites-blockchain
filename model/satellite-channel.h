@@ -60,11 +60,9 @@ public:
   * on the channel (except for the sender).
   *
   * \param packet the packet to send
-  *\\param protocol
-  *\\param to
-  *\\param sender
+  * \param sender pointer to sender device
   */
-  void Send (Ptr<Packet> packet, uint16_t protocol, Address to, Ptr<SatelliteNetDevice> sender);
+  void Send (Ptr<Packet> packet, Ptr<SatelliteNetDevice> sender);
 
   class Links
   {

@@ -87,7 +87,7 @@ public:
 */
   void DoDispose ();
 
-  bool StartRX (Ptr<Packet> packet, const Address &src, uint16_t protocol);
+  bool StartRX (Ptr<Packet> packet);
 
   void SetInterframeGap (Time &m_tInterframeGap);
 
@@ -124,7 +124,6 @@ private:
   Time m_InterframeGap;
   Ptr<Packet> m_currentTxPacket;
   Ptr<Node> m_node;   //!< Node owning this NetDevice
-  uint16_t m_protocol;
   Address m_address;
   Ptr<SatelliteChannel> m_channel;
   bool m_linkUp;        //!< Identify if the link is up or not
