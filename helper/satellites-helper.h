@@ -10,16 +10,20 @@
 namespace ns3 {
 class SatellitesHelper {
 public:
-  NodeContainer ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time time);
+  NetDeviceContainer ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time time);
   const Ptr<SatelliteChannel> &getM_channel () const;
   std::vector<SatelliteChannel::Links> LoadLinks (std::string filename, int totalNodes);
+  const NodeContainer &getM_nodes() const;
+  bool SetupLXC();
+  bool CreateLXC();
+  bool RunLXC();
+  bool DestroyLXC();
+  bool GenerateLXCConfigFiles();
 private:
   Ptr<SatelliteChannel> m_channel;
   NetDeviceContainer m_netDevices;
-public:
-  const NetDeviceContainer &getM_netDevices () const;
-
-  void setM_netDevices (const NetDeviceContainer &m_netDevices);
+  NodeContainer m_nodes;
+  std::string ipToString(Ipv4InterfaceAddress address);
 };
 
 }

@@ -1,32 +1,29 @@
 #include <ns3/core-module.h>
 #include <ns3/network-module.h>
 #include <ns3/internet-module.h>
-#include <ns3/udp-client-server-helper.h>
 #include <ns3/satellite-channel.h>
 #include <ns3/satellite-net-device.h>
 #include <ns3/mobility-module.h>
-#include <ns3/bulk-send-helper.h>
-#include <ns3/packet-sink.h>
-#include <ns3/packet-sink-helper.h>
 #include <ns3/low-resolution-radio-module.h>
-#include <ns3/flow-monitor-module.h>
-#include "ns3/csma-module.h"
+#include <ns3/trace-helper.h>
 #include "ns3/tap-bridge-module.h"
-#include <ns3/v4ping-helper.h>
-
 #include <ns3/satellites-helper.h>
+#include <ns3/lrr-routing-topology.h>
 
 using namespace ns3;
 using namespace std;
 
 int main (int argc, char *argv[]) {
-  LogComponentEnable ("TapBridge", LOG_LEVEL_INFO);
+  LogComponentEnable ("TapBridge", LOG_LEVEL_ALL);
   LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
   LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
+  LogComponentEnable ("LrrRoutingProtocol", LOG_LEVEL_ALL);
+  //LogComponentEnable ("Ipv4L3Protocol", LOG_LEVEL_ALL);
+
 
   // Specify default paths for this toy example
-  string mobilityTracePath = "src/satellites-blockchain/examples/mobility.trace";
-  string linksPath = "src/satellites-blockchain/examples/links";
+  string mobilityTracePath = "./src/satellites-blockchain/examples/mobility.trace";
+  string linksPath = "./src/satellites-blockchain/examples/links";
 
   CommandLine cmd;
   cmd.AddValue ("tracePath", "Path to the NS2Mobility trace file", mobilityTracePath);
@@ -41,12 +38,11 @@ int main (int argc, char *argv[]) {
   GlobalValue::Bind ("SimulatorImplementationType", StringValue ("ns3::RealtimeSimulatorImpl"));
   GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
 
-  NodeContainer nodes;
+  NetDeviceContainer devices;
   SatellitesHelper satHelper;
-  uint32_t nNodes = 2;
+  uint32_t nNodes = 3;
   // TODO: return net device container here
-  nodes = satHelper.ConfigureNodes (nNodes, DataRate ("100MB/s"), Time (0));
-
+  devices = satHelper.ConfigureNodes (nNodes, DataRate ("100MB/s"), Time (0));
   Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
   ns2.Install ();   // configure movements for each node, while reading trace file
 
@@ -57,31 +53,12 @@ int main (int argc, char *argv[]) {
       satHelper.getM_channel ()->SetLinks (links);
   }
 
-  //5. Install internet stack and routing:
-  InternetStackHelper internet;
-  internet.Install (nodes);
-  Ipv4AddressHelper addresses;
-  addresses.SetBase ("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = addresses.Assign (satHelper.getM_netDevices ());
-
-  LrrRoutingHelper lrrRouting;
-  internet.SetRoutingHelper (lrrRouting);
-
-  // 6. Use the TapBridgeHelper to connect to the pre-configured tap devices.
-  TapBridgeHelper tapBridge;
-  tapBridge.SetAttribute ("Mode", StringValue ("ConfigureLocal"));
-  for(uint32_t i = 0; i < nNodes; i++)
-  {
-      string deviceNameBase ("tap-");
-      deviceNameBase.append (to_string (i + 1));
-      tapBridge.SetAttribute ("DeviceName", StringValue (deviceNameBase));
-      tapBridge.Install (nodes.Get (i), satHelper.getM_netDevices ().Get (i));
-    }
-
   lrr::GlobalGraph::Instance ()->Start ();
-  Simulator::Stop (Seconds (650));
+  //Simulator::Stop(Time("300s"));
   Simulator::Run ();
-
+  //std::ofstream s("topology.txt", std::ofstream::out);
+  //lrr::GlobalGraph::Instance()->PrintGraph(s);
+  //s.close();
   lrr::GlobalGraph::Instance ()->Stop ();
 
   Simulator::Destroy ();

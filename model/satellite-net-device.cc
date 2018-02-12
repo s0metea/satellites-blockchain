@@ -1,7 +1,6 @@
 #include "satellite-net-device.h"
 #include <ns3/network-module.h>
 #include <ns3/pointer.h>
-#include <ns3/drop-tail-queue.h>
 
 namespace ns3 {
 
@@ -40,7 +39,7 @@ SatelliteNetDevice::SatelliteNetDevice()
 {
   NS_LOG_FUNCTION (this);
   m_queue = CreateObject<DropTailQueue<Packet> >();
-  m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
+  //m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
 }
 
 SatelliteNetDevice::~SatelliteNetDevice()
@@ -214,14 +213,13 @@ SatelliteNetDevice::StartRX (Ptr<Packet> packet)
 
 bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
 {
-  NS_LOG_FUNCTION ("Device:" << m_address << " " << packet->GetUid ());
+  NS_LOG_FUNCTION ("Device: " << m_address << " " << packet->GetUid ());
   EthernetHeader eh (false);
   LlcSnapHeader llc;
   packet->RemoveHeader (eh);
   packet->RemoveHeader (llc);
   Mac48Address from = eh.GetSource ();
   Mac48Address dst = eh.GetDestination ();
-  NS_LOG_DEBUG("Forward up: I am " << m_address << ". DST address is" << dst);
   NetDevice::PacketType type;
   if (dst.IsBroadcast ())
     {
@@ -239,18 +237,19 @@ bool SatelliteNetDevice::ForwardUp (Ptr<Packet> packet)
   if (type != NetDevice::PACKET_OTHERHOST)
     {
       NS_ASSERT (!m_forwardUp.IsNull ());
-      NS_LOG_DEBUG("Forward up packet UID" << packet->GetUid());
+      NS_LOG_DEBUG("Forward up: I am " << m_address << ". DST address is " << dst << ".");
+      NS_LOG_DEBUG("Forward up packet UID: " << packet->GetUid());
       m_forwardUp (this, packet, llc.GetType (), from);
     }
 
   if (!m_promiscRxCallback.IsNull ())
     {
-      NS_LOG_DEBUG("Promisc Forward up packet UID" << packet->GetUid());
+      NS_LOG_DEBUG("Promiscuous RX callback. Packet UID: " << packet->GetUid());
       m_promiscRxCallback (this, packet, llc.GetType (), from, dst, type);
     }
   else
   {
-      NS_LOG_DEBUG("Promisc RX callback is not set");
+      NS_LOG_DEBUG("Promiscuous RX callback is not set");
   }
   return true;
 }
@@ -270,7 +269,7 @@ SatelliteNetDevice::IsBroadcast () const
 Address
 SatelliteNetDevice::GetBroadcast () const
 {
-  return Mac48Address::GetBroadcast ();
+    return Mac48Address ("ff:ff:ff:ff:ff:ff");
 }
 
 bool
@@ -333,7 +332,7 @@ void SatelliteNetDevice::SetInterframeGap (Time &m_tInterframeGap)
 
 std::vector<Ptr<NetDevice> > SatelliteNetDevice::GetCommunicationNeighbors () const
 {
-  NS_LOG_FUNCTION (this);
+  //NS_LOG_FUNCTION (this);
   std::vector<Ptr<NetDevice> > neighbors;
   Time time = Time (0);
   //double time = Simulator::Now().GetSeconds();
