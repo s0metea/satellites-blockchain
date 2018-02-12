@@ -41,7 +41,6 @@ int main (int argc, char *argv[]) {
   NetDeviceContainer devices;
   SatellitesHelper satHelper;
   uint32_t nNodes = 3;
-  // TODO: return net device container here
   devices = satHelper.ConfigureNodes (nNodes, DataRate ("100MB/s"), Time (0));
   Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
   ns2.Install ();   // configure movements for each node, while reading trace file

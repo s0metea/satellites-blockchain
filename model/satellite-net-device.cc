@@ -124,7 +124,7 @@ SatelliteNetDevice::SetReceiveCallback (NetDevice::ReceiveCallback cb)
 bool
 SatelliteNetDevice::NeedsArp (void) const
 {
-  return false;
+  return true;
 }
 
 void
