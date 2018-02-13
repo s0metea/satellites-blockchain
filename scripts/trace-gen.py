@@ -96,7 +96,7 @@ def generate_trace(timestamp, positions, velocities, links):
     #                                                                                     get_velocity(vel_x, vel_y,
     #                                                                                                  vel_z)))
     #   x0 = x0 + 1
-    
+
     x = 0
     finalIndex = 100
     if finalIndex > len(timestamp):
