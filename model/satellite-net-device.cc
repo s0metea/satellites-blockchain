@@ -39,7 +39,6 @@ SatelliteNetDevice::SatelliteNetDevice()
 {
   NS_LOG_FUNCTION (this);
   m_queue = CreateObject<DropTailQueue<Packet> >();
-  //m_forwardUp = MakeNullCallback<bool, Ptr<NetDevice>, Ptr<const Packet>, uint16_t, const Address &>();
 }
 
 SatelliteNetDevice::~SatelliteNetDevice()

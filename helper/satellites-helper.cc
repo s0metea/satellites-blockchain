@@ -17,17 +17,16 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
   Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
   ObjectFactory m_propagationDelay;
   m_propagationDelay.SetTypeId ("ns3::ConstantSpeedPropagationDelayModel");
-  Ptr<PropagationDelayModel> delay = m_propagationDelay.Create<PropagationDelayModel> ();
+  Ptr<ConstantSpeedPropagationDelayModel> delay = m_propagationDelay.Create<ConstantSpeedPropagationDelayModel> ();
   channel->SetPropagationDelay (delay);
   m_channel = channel;
   NodeContainer nodes;
+
   nodes.Create (nodes_amount * 2);
 
   for(uint32_t i = 0; i < nodes_amount * 2; i++) {
       Ptr<SatelliteNetDevice> device = CreateObject<SatelliteNetDevice>();
-      std::string macBase("00:00:00:00:01:0");
-      macBase.append(std::to_string(i + 1));
-      Mac48Address mac = Mac48Address(macBase.c_str());
+      Mac48Address mac = Mac48Address::Allocate();
       std::cout << mac << std::endl;
       device->SetAddress(mac);
       device->SetDataRate(dataRate);
@@ -45,6 +44,7 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
     gatewayDevices.Add(m_netDevices.Get(i + 1));
   }
 
+
   //Install internet stack and routing:
   InternetStackHelper internet;
   //Routing by LRR:
@@ -58,16 +58,12 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
   // Use the TapBridgeHelper to connect to the pre-configured tap devices.
   TapBridgeHelper tapBridge;
   tapBridge.SetAttribute ("Mode", StringValue ("ConfigureLocal"));
-  uint32_t tapIndex = 1;
-  uint32_t deviceIndex = 0;
-  for(uint32_t i = 0; i < nodes_amount * 2; i += 2) {
+  for(uint32_t i = 0; i < satellitesDevices.GetN(); i ++) {
       //Setup tap devices
-      std::string deviceNameBase ("tap-");
-      deviceNameBase.append (std::to_string (tapIndex));
+      std::string deviceNameBase ("tap");
+      deviceNameBase.append (std::to_string (i));
       tapBridge.SetAttribute ("DeviceName", StringValue (deviceNameBase));
-      tapBridge.Install (nodes.Get (i), satellitesDevices.Get(deviceIndex));
-      tapIndex++;
-      deviceIndex++;
+      tapBridge.Install (nodes.Get (i * 2), satellitesDevices.Get(i));
   }
   //We generate .conf files for nodes. LXC initialization should be done with .sh scripts.
   GenerateLXCConfigFiles();
@@ -122,8 +118,8 @@ SatellitesHelper::CreateLXC() {
     for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
         //Creating LXC config and write it to .conf file
         std::string currentConfig;
-        std::string lxcName("lxc-");
-        lxcName.append (std::to_string (i + 1));
+        std::string lxcName("lxc");
+        lxcName.append (std::to_string (i));
         //Creating LXC:
         std::string createCommand("lxc-create -f ./");
         createCommand.append(lxcName);
@@ -140,8 +136,8 @@ bool
 SatellitesHelper::DestroyLXC() {
     for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
         //Stop LXC
-        std::string lxcName("lxc-");
-        lxcName.append (std::to_string (i + 1));
+        std::string lxcName("lxc");
+        lxcName.append (std::to_string (i));
         std::string stopCommand("lxc-stop -n ");
         stopCommand.append(lxcName);
         stopCommand.append(" -k");
@@ -159,7 +155,7 @@ bool
 SatellitesHelper::RunLXC() {
     for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
         //Starting LXC
-        std::string lxcName("lxc-");
+        std::string lxcName("lxc");
         std::string startCommand("lxc-start -n ");
         startCommand.append(lxcName);
         system(startCommand.c_str());
@@ -175,15 +171,14 @@ SatellitesHelper::GenerateLXCConfigFiles() {
     std::string lxcNetworkLink("lxc.network.link = ");
     std::string lxcNetworkName("lxc.network.name = eth0");
     std::string lxcNetworkIpv4("lxc.network.ipv4 = ");
-    std::string lxcNetworkGateway("lxc.network.ipv4.gateway = ");
     std::string lxcNetworkMask("/24");
     for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
         //Creating LXC config and write it to .conf file
         std::string currentConfig;
-        std::string lxcName("lxc-");
-        std::string tapName("tap-");
-        lxcName.append (std::to_string (i + 1));
-        tapName.append (std::to_string (i + 1));
+        std::string lxcName("lxc");
+        std::string tapName("tap");
+        lxcName.append (std::to_string (i));
+        tapName.append (std::to_string (i));
         currentConfig.append(lxcUtsName).append(lxcName).append("\n");
         currentConfig.append(lxcNetworkType).append("\n");
         currentConfig.append(lxcNetworkLink).append(tapName).append("\n");
@@ -198,7 +193,6 @@ SatellitesHelper::GenerateLXCConfigFiles() {
         ipv4 = m_nodes.Get(i * 2 + 1)->GetObject<Ipv4> ();
         iaddr = ipv4->GetAddress(1, 0);
         std::string gatewayIP = ipToString(iaddr);
-        currentConfig.append(lxcNetworkGateway).append(gatewayIP).append("\n");
         std::ofstream out(lxcName.append(".conf"));
         out << currentConfig;
         out.close();

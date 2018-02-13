@@ -14,7 +14,7 @@ using namespace ns3;
 using namespace std;
 
 int main (int argc, char *argv[]) {
-  LogComponentEnable ("TapBridge", LOG_LEVEL_ALL);
+  //LogComponentEnable ("TapBridge", LOG_LEVEL_ALL);
   LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
   LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
   LogComponentEnable ("LrrRoutingProtocol", LOG_LEVEL_ALL);
@@ -58,9 +58,10 @@ int main (int argc, char *argv[]) {
   //std::ofstream s("topology.txt", std::ofstream::out);
   //lrr::GlobalGraph::Instance()->PrintGraph(s);
   //s.close();
-  lrr::GlobalGraph::Instance ()->Stop ();
 
   Simulator::Destroy ();
+  lrr::GlobalGraph::Instance ()->Stop ();
+
   return 0;
 }
 
