@@ -49,7 +49,6 @@ SatellitesHelper::ConfigureNodes (uint32_t satellites, uint32_t groundStations, 
   for(uint32_t i = satellites + groundStations; i < nodes.GetN(); i ++) {
     m_groundStationDevices.Add(m_netDevices.Get(i));
   }
-
   //Install internet stack and routing:
   InternetStackHelper internet;
   //Routing by LRR:
