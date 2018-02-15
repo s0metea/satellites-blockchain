@@ -1,9 +1,7 @@
 #!/bin/bash
-# file: init-lxc.sh
+# file: setup-route.sh
 for ((i=0; i<$1; i++));
 do
-    lxc-create -f ./conf/lxc$i.conf -n lxc$i -t ubuntu
-    lxc-start -n lxc$i
     <./conf/route/lxc0.sh lxc-attach -n lxc$i -- /bin/sh -c "/bin/cat > /home/lxc$i.sh"
     lxc-attach -n lxc$i -- bash /home/lxc$i.sh
 done
