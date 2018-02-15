@@ -78,9 +78,6 @@ def generate_trace_with_interpolation(timestamp, positions, velocities, links):
                 names_file.write(
                     '$ns_ at {} "$node_({}) setdest {} {} {} {}"\n'.format(time / 1000 + i, satellite, pos_x, pos_y,
                                                                            pos_z, velocity))
-                names_file.write(
-                    '$ns_ at {} "$node_({}) setdest {} {} {} {}"\n'.format(time / 1000 + i, satellite, pos_x, pos_y,
-                                                                           pos_z, velocity))
         x0 = x0 + 1
 
 
@@ -97,18 +94,16 @@ def generate_start_positions(timestamp, positions):
         names_file.write('$node_({}) set Y_ {}\n'.format(satellite, positions[satellite][0][1]))
         names_file.write('$node_({}) set Z_ {}\n'.format(satellite, positions[satellite][0][2]))
 
-    # Ground stations and its gateways
-    node_index = satellites
-    for ground_station in range(satellite, satellites + ground_stations):
-        # Ground station
-        names_file.write('$node_({}) set X_ {}\n'.format(node_index, positions[ground_station][0][0]))
-        names_file.write('$node_({}) set Y_ {}\n'.format(node_index, positions[ground_station][0][1]))
-        names_file.write('$node_({}) set Z_ {}\n'.format(node_index, positions[ground_station][0][2]))
-        # Gateway
-        names_file.write('$node_({}) set X_ {}\n'.format(node_index + 1, positions[ground_station][0][0]))
-        names_file.write('$node_({}) set Y_ {}\n'.format(node_index + 1, positions[ground_station][0][1]))
-        names_file.write('$node_({}) set Z_ {}\n'.format(node_index + 1, positions[ground_station][0][2]))
-        node_index += 2
+    # Gateways
+    for ground_station in range(satellites, satellites + ground_stations):
+        names_file.write('$node_({}) set X_ {}\n'.format(ground_station, positions[ground_station][0][0]))
+        names_file.write('$node_({}) set Y_ {}\n'.format(ground_station, positions[ground_station][0][1]))
+        names_file.write('$node_({}) set Z_ {}\n'.format(ground_station, positions[ground_station][0][2]))
+    # Ground stations
+    for ground_station in range(satellites, satellites + ground_stations):
+        names_file.write('$node_({}) set X_ {}\n'.format(ground_station + ground_stations, positions[ground_station][0][0]))
+        names_file.write('$node_({}) set Y_ {}\n'.format(ground_station + ground_stations, positions[ground_station][0][1]))
+        names_file.write('$node_({}) set Z_ {}\n'.format(ground_station + ground_stations, positions[ground_station][0][2]))
     names_file.close()
 
 
@@ -123,7 +118,6 @@ def generate_trace(timestamp, positions, velocities):
     final_index = 100
     if final_index > len(timestamp):
         final_index = len(timestamp)
-    satellite = 0
     for time in range(final_index):
         for satellite in range(satellites):
             pos_x = positions[satellite][x][0]
@@ -139,7 +133,7 @@ def generate_trace(timestamp, positions, velocities):
                                                                                     pos_y,
                                                                                     pos_z,
                                                                                     velocity))
-        node_index = satellite + 1
+        # Gateways has the same position and velocity
         for ground_station in range(satellites, satellites + ground_stations):
             pos_x = positions[ground_station][x][0]
             pos_y = positions[ground_station][x][1]
@@ -149,20 +143,26 @@ def generate_trace(timestamp, positions, velocities):
             vel_z = velocities[ground_station][x][2]
             velocity = get_velocity(vel_x, vel_y, vel_z)
             names_file.write('$ns_ at {} "$node_({}) setdest {} {} {} {}"\n'.format(timestamp[time] / 1000.0,
-                                                                                    node_index,
+                                                                                    ground_station,
                                                                                     pos_x,
                                                                                     pos_y,
                                                                                     pos_z,
                                                                                     velocity))
-            # Gateway has the same position and velocity
+        # Ground stations:
+        for ground_station in range(satellites, satellites + ground_stations):
+            pos_x = positions[ground_station][x][0]
+            pos_y = positions[ground_station][x][1]
+            pos_z = positions[ground_station][x][2]
+            vel_x = velocities[ground_station][x][0]
+            vel_y = velocities[ground_station][x][1]
+            vel_z = velocities[ground_station][x][2]
+            velocity = get_velocity(vel_x, vel_y, vel_z)
             names_file.write('$ns_ at {} "$node_({}) setdest {} {} {} {}"\n'.format(timestamp[time] / 1000.0,
-                                                                                    node_index + 1,
+                                                                                    ground_station + ground_stations,
                                                                                     pos_x,
                                                                                     pos_y,
                                                                                     pos_z,
                                                                                     velocity))
-            node_index += 2
-        x = x + 1
     names_file.close()
 
 
