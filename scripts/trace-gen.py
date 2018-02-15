@@ -98,7 +98,7 @@ def generate_start_positions(timestamp, positions):
         names_file.write('$node_({}) set Z_ {}\n'.format(satellite, positions[satellite][0][2]))
 
     # Ground stations and its gateways
-    node_index = satellites + 1
+    node_index = satellites
     for ground_station in range(satellite, satellites + ground_stations):
         # Ground station
         names_file.write('$node_({}) set X_ {}\n'.format(node_index, positions[ground_station][0][0]))

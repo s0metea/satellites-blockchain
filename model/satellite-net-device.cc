@@ -147,16 +147,14 @@ SatelliteNetDevice::Send (Ptr<Packet> packet, const Address &dest, uint16_t prot
   return true;
 }
 
-bool SatelliteNetDevice::SendFrom (Ptr<Packet> packet, const Address &source, const Address &dest,
-                                   uint16_t protocolNumber)
+bool
+SatelliteNetDevice::SendFrom (Ptr<Packet> packet, const Address &source, const Address &dest, uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << source << dest << protocolNumber);
-
   //EthernetHeader:
   EthernetHeader ethernetHeader (false);
   ethernetHeader.SetSource (Mac48Address::ConvertFrom (source));
   ethernetHeader.SetDestination (Mac48Address::ConvertFrom (dest));
-
   //LLCHeader:
   LlcSnapHeader llc;
   llc.SetType (protocolNumber);
@@ -333,8 +331,6 @@ std::vector<Ptr<NetDevice> > SatelliteNetDevice::GetCommunicationNeighbors () co
 {
   //NS_LOG_FUNCTION (this);
   std::vector<Ptr<NetDevice> > neighbors;
-  Time time = Time (0);
-  //double time = Simulator::Now().GetSeconds();
   //We need to know current net device id, so:
   uint32_t currentIndex = 0;
   for (uint32_t i = 0; i < m_channel->GetNDevices (); i++)
@@ -347,23 +343,21 @@ std::vector<Ptr<NetDevice> > SatelliteNetDevice::GetCommunicationNeighbors () co
   //Searching for the nearest time in links:
   std::vector<bool> links;
   std::vector<SatelliteChannel::Links> all_links = m_channel->GetLinks ();
-
-  //Below we try to find the closest time
   //ToDo: Binary search
   for (std::vector<SatelliteChannel::Links>::iterator it = all_links.begin (); it != all_links.end (); ++it) {
-      if((it->m_time).Compare (time) > 0)
+      if((it->m_time).Compare (Simulator::Now()) > 0)
         {
           links = (it-1)->m_links.at (currentIndex);
           break;
         }
-    }
+  }
   for (uint32_t i = 0; i < links.size (); i++)
-    {
+  {
       if (i != currentIndex && links[i])
         {
           neighbors.push_back (m_channel->GetDevice (i));
         }
-    }
+  }
   return neighbors;
 }
 }

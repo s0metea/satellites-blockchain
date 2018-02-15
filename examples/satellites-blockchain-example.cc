@@ -40,15 +40,16 @@ int main (int argc, char *argv[]) {
 
   NetDeviceContainer devices;
   SatellitesHelper satHelper;
-  uint32_t nNodes = 3;
-  devices = satHelper.ConfigureNodes (nNodes, DataRate ("100MB/s"), Time (0));
+  uint32_t satellites = 40;
+  uint32_t groundStations = 9;
+  devices = satHelper.ConfigureNodes (satellites, groundStations, DataRate ("100MB/s"), Time (0));
   Ns2MobilityHelper ns2 = Ns2MobilityHelper (mobilityTracePath);
   ns2.Install ();   // configure movements for each node, while reading trace file
 
   std::vector<SatelliteChannel::Links> links;
   if(!linksPath.empty ())
   {
-      links = satHelper.LoadLinks (linksPath, nNodes);
+      links = satHelper.LoadLinks (linksPath);
       satHelper.getM_channel ()->SetLinks (links);
   }
 

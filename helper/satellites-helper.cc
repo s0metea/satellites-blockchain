@@ -11,7 +11,7 @@
 
 namespace ns3 {
 NetDeviceContainer
-SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time time)
+SatellitesHelper::ConfigureNodes (uint32_t satellites, uint32_t groundStations, DataRate dataRate, Time time)
 {
   //Initial setup
   Ptr<SatelliteChannel> channel = CreateObject<SatelliteChannel> ();
@@ -22,12 +22,13 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
   m_channel = channel;
   NodeContainer nodes;
 
-  nodes.Create (nodes_amount * 2);
+  //Each ground station has its own gateway, so:
+  uint32_t totalNodesAmount = satellites + 2 * groundStations;
+  nodes.Create (totalNodesAmount);
 
-  for(uint32_t i = 0; i < nodes_amount * 2; i++) {
+  for(uint32_t i = 0; i < nodes.GetN(); i++) {
       Ptr<SatelliteNetDevice> device = CreateObject<SatelliteNetDevice>();
       Mac48Address mac = Mac48Address::Allocate();
-      std::cout << mac << std::endl;
       device->SetAddress(mac);
       device->SetDataRate(dataRate);
       device->SetInterframeGap(time);
@@ -38,12 +39,16 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
   }
   m_nodes = nodes;
 
-  NetDeviceContainer gatewayDevices, satellitesDevices;
-  for(uint32_t i = 0; i < (nodes_amount * 2) - 1; i += 2) {
-    satellitesDevices.Add(m_netDevices.Get(i));
-    gatewayDevices.Add(m_netDevices.Get(i + 1));
+  //First 40 nodes are satellites
+  for(uint32_t i = 0; i < satellites; i ++) {
+    m_satelliteDevices.Add(m_netDevices.Get(i));
   }
-
+  for(uint32_t i = satellites; i < satellites + groundStations; i ++) {
+    m_gatewayDevices.Add(m_netDevices.Get(i));
+  }
+  for(uint32_t i = satellites + groundStations; i < nodes.GetN(); i ++) {
+    m_groundStationDevices.Add(m_netDevices.Get(i));
+  }
 
   //Install internet stack and routing:
   InternetStackHelper internet;
@@ -58,16 +63,16 @@ SatellitesHelper::ConfigureNodes (uint32_t nodes_amount, DataRate dataRate, Time
   // Use the TapBridgeHelper to connect to the pre-configured tap devices.
   TapBridgeHelper tapBridge;
   tapBridge.SetAttribute ("Mode", StringValue ("ConfigureLocal"));
-  for(uint32_t i = 0; i < satellitesDevices.GetN(); i ++) {
+  for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i ++) {
       //Setup tap devices
       std::string deviceNameBase ("tap");
       deviceNameBase.append (std::to_string (i));
       tapBridge.SetAttribute ("DeviceName", StringValue (deviceNameBase));
-      tapBridge.Install (nodes.Get (i * 2), satellitesDevices.Get(i));
+      tapBridge.Install (m_groundStationDevices.Get(i)->GetNode(), m_groundStationDevices.Get(i));
   }
   //We generate .conf files for nodes. LXC initialization should be done with .sh scripts.
   GenerateLXCConfigFiles();
-
+  GenerateLXCRouteRules();
   return m_netDevices;
 }
 
@@ -78,7 +83,7 @@ Ptr<SatelliteChannel> &SatellitesHelper::getM_channel () const
 }
 
 std::vector<SatelliteChannel::Links>
-SatellitesHelper::LoadLinks (std::string filename, int totalNodes){
+SatellitesHelper::LoadLinks (std::string filename){
   std::string time;
   std::vector<SatelliteChannel::Links> links;
   std::vector<std::vector<bool> > nodes;
@@ -86,14 +91,15 @@ SatellitesHelper::LoadLinks (std::string filename, int totalNodes){
   std::ifstream links_file;
   bool val;
   std::string row;
+  uint32_t totalNodes = m_nodes.GetN();
   links_file.open (filename.c_str (), std::ios_base::in);
   while(std::getline (links_file, time))
     {
-      for(int i = 0; i < totalNodes * 2; i++)
+      for(uint32_t i = 0; i < totalNodes; i++)
         {
           std::getline (links_file, row);
           std::istringstream iss (row);
-          for (int j = 0; j < totalNodes * 2; j++)
+          for (uint32_t j = 0; j < totalNodes; j++)
             {
               iss >> val;
               single_node.push_back (val);
@@ -115,7 +121,7 @@ const NodeContainer
 
 bool
 SatellitesHelper::CreateLXC() {
-    for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
+    for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i++) {
         //Creating LXC config and write it to .conf file
         std::string currentConfig;
         std::string lxcName("lxc");
@@ -134,7 +140,7 @@ SatellitesHelper::CreateLXC() {
 
 bool
 SatellitesHelper::DestroyLXC() {
-    for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
+    for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i++) {
         //Stop LXC
         std::string lxcName("lxc");
         lxcName.append (std::to_string (i));
@@ -153,7 +159,7 @@ SatellitesHelper::DestroyLXC() {
 
 bool
 SatellitesHelper::RunLXC() {
-    for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
+    for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i++) {
         //Starting LXC
         std::string lxcName("lxc");
         std::string startCommand("lxc-start -n ");
@@ -172,7 +178,9 @@ SatellitesHelper::GenerateLXCConfigFiles() {
     std::string lxcNetworkName("lxc.network.name = eth0");
     std::string lxcNetworkIpv4("lxc.network.ipv4 = ");
     std::string lxcNetworkMask("/24");
-    for(uint32_t i = 0; i < getM_nodes().GetN() / 2; i++) {
+    std::string lxcScriptUp("lxc.network.script.up = ");
+
+    for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i++) {
         //Creating LXC config and write it to .conf file
         std::string currentConfig;
         std::string lxcName("lxc");
@@ -184,19 +192,61 @@ SatellitesHelper::GenerateLXCConfigFiles() {
         currentConfig.append(lxcNetworkLink).append(tapName).append("\n");
         currentConfig.append(lxcNetworkName).append("\n");
         currentConfig.append(lxcNetworkIpv4);
-        Ptr<Ipv4> ipv4 = m_nodes.Get(i * 2)->GetObject<Ipv4> ();
+        Ptr<Ipv4> ipv4 = m_groundStationDevices.Get(i)->GetNode()->GetObject<Ipv4> ();
         Ipv4InterfaceAddress iaddr = ipv4->GetAddress(1, 0);
         std::string ip = ipToString(iaddr);
         currentConfig.append(ip);
         currentConfig.append(lxcNetworkMask).append("\n");
-        //Gateway:
-        ipv4 = m_nodes.Get(i * 2 + 1)->GetObject<Ipv4> ();
-        iaddr = ipv4->GetAddress(1, 0);
-        std::string gatewayIP = ipToString(iaddr);
-        std::ofstream out(lxcName.append(".conf"));
+        std::string pathToLXCConf("./src/satellites-blockchain/lxc/conf/");
+        std::ofstream out(pathToLXCConf.append(lxcName.append(".conf")));
+        //currentConfig.append(lxcScriptUp).append("./conf/route/").append(lxcName).append(".sh\n");
         out << currentConfig;
         out.close();
     }
+    return true;
+}
+
+bool
+SatellitesHelper::GenerateLXCRouteRules() {
+    std::string header("#!/bin/sh\n");
+    std::string ipRouteAddDefault("ip route add default via ");
+    std::string ipRouteAdd("ip route add ");
+    for(uint32_t i = 0; i < m_groundStationDevices.GetN(); i++) {
+        std::string pathToRouteRules("./src/satellites-blockchain/lxc/conf/route/");
+        std::string script;
+        script.append(header);
+        std::string lxcName("lxc");
+        lxcName.append(std::to_string(i));
+        Ptr<Ipv4> ipv4 = m_gatewayDevices.Get(i)->GetNode()->GetObject<Ipv4> ();
+        Ipv4InterfaceAddress iaddr = ipv4->GetAddress(1, 0);
+        std::string gwIP = ipToString(iaddr);
+        script.append(ipRouteAddDefault).append(gwIP).append("\n");
+        for(uint32_t j = 0; j < m_satelliteDevices.GetN(); j++) {
+            Ptr<Ipv4> ipv4 = m_satelliteDevices.Get(j)->GetNode()->GetObject<Ipv4> ();
+            Ipv4InterfaceAddress iaddr = ipv4->GetAddress(1, 0);
+            std::string ip = ipToString(iaddr);
+            script.append(ipRouteAdd).append(ip).append(" via ").append(gwIP).append("\n");
+        }
+        for(uint32_t j = 0; j < m_gatewayDevices.GetN(); j++) {
+            Ptr<Ipv4> ipv4 = m_gatewayDevices.Get(j)->GetNode()->GetObject<Ipv4> ();
+            Ipv4InterfaceAddress iaddr = ipv4->GetAddress(1, 0);
+            std::string ip = ipToString(iaddr);
+            script.append(ipRouteAdd).append(ip).append(" via ").append(gwIP).append("\n");
+        }
+        for(uint32_t j = 0; j < m_groundStationDevices.GetN(); j++) {
+            if(i != j) {
+                Ptr<Ipv4> ipv4 = m_groundStationDevices.Get(j)->GetNode()->GetObject<Ipv4>();
+                Ipv4InterfaceAddress iaddr = ipv4->GetAddress(1, 0);
+                std::string ip = ipToString(iaddr);
+                script.append(ipRouteAdd).append(ip).append(" via ").append(gwIP).append("\n");
+            }
+        }
+        std::ofstream out(pathToRouteRules.append(lxcName.append(".sh")));
+        out << script;
+        out.close();
+    }
+
+
     return true;
 }
 
@@ -219,16 +269,17 @@ SatellitesHelper::SetupLXC() {
     return true;
 }
 
-    std::string SatellitesHelper::ipToString(Ipv4InterfaceAddress address) {
-        char buf[4];
-        address.GetLocal().Serialize((uint8_t *) buf);
-        std::string ip;
-        ip.append(
-                std::to_string(buf[0])).append(".").
-                append(std::to_string(buf[1])).append(".").
-                append(std::to_string(buf[2])).append(".").
-                append(std::to_string(buf[3]));
-        return ip;
-    }
+std::string
+SatellitesHelper::ipToString(Ipv4InterfaceAddress address) {
+    char buf[4];
+    address.GetLocal().Serialize((uint8_t *) buf);
+    std::string ip;
+    ip.append(
+            std::to_string(buf[0])).append(".").
+            append(std::to_string(buf[1])).append(".").
+            append(std::to_string(buf[2])).append(".").
+            append(std::to_string(buf[3]));
+    return ip;
+}
 }
 
