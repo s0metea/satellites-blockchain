@@ -15,9 +15,10 @@ using namespace std;
 
 int main (int argc, char *argv[]) {
   //LogComponentEnable ("TapBridge", LOG_LEVEL_ALL);
-  LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
-  LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
-  LogComponentEnable ("LrrRoutingProtocol", LOG_LEVEL_ALL);
+  //LogComponentEnable ("ns3::SatelliteChannel", LOG_LEVEL_ALL);
+  //LogComponentEnable ("ns3::SatelliteNetDevice", LOG_LEVEL_ALL);
+  //LogComponentEnable ("Ns2MobilityHelper", LOG_LEVEL_ALL);
+  //LogComponentEnable ("LrrRoutingProtocol", LOG_LEVEL_ALL);
   //LogComponentEnable ("Ipv4L3Protocol", LOG_LEVEL_ALL);
 
 
