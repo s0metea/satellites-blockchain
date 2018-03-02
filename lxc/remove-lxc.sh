@@ -9,6 +9,3 @@ for ((i=0; i<$1; i++));
 		lxc-destroy -n lxc$i
 	done
 lxc-ls -f
-
-
-

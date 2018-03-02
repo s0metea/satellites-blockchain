@@ -1,0 +1,10 @@
+sudo docker build -t ether .
+sudo docker build -t observer .
+
+sudo docker run -ti ether
+sudo docker run -ti observer
+
+geth --identity="NODE" --networkid="500" --verbosity=3 --mine --minerthreads=1 --rpc --rpcport=8546 --rpcaddr 0.0.0.0
+
+sudo pipework --direct-phys tap0 $761fccec1799 10.0.0.50/24
+docker network create --subnet=10.0.0.0/24 --gateway 10.0.0.1 -d ipvlan -o parent=tap0 sat-net
