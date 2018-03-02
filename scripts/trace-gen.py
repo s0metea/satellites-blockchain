@@ -163,16 +163,17 @@ def generate_trace(timestamp, positions, velocities):
                                                                                     pos_y,
                                                                                     pos_z,
                                                                                     velocity))
+        x = x + 1
     names_file.close()
 
 
 def generate_links(timestamp, links):
     satellites = 40
     ground_stations = 9
-
     print("Links file creation...")
     file = open("./data/links", "w+")
     matrix_size = satellites + ground_stations * 2
+    connected_components = []
     for moment_of_time in range(len(timestamp[:100])):
         file.write('{}s\n'.format(int(timestamp[moment_of_time] / 1000)))
         matrix = np.identity((matrix_size), dtype='int32')
@@ -185,6 +186,11 @@ def generate_links(timestamp, links):
             for col in row:
                 file.write('{} '.format(int(col)))
             file.write('\n')
+        laplacian = np.diag(np.sum(matrix, axis=0)) - matrix
+        eigen_vals, _ = np.linalg.eig(laplacian)
+        connected_components += [np.sum(eigen_vals <= np.finfo(np.float32).eps)]
+    plt.hist(connected_components)
+    plt.savefig("linked_components_gw.png")
     file.close()
 
 
@@ -216,6 +222,52 @@ def load_data(nodes_path, links_path):
         'links': links.reshape(-1, int(n_stations), int(n_stations))
     }
 
+def plot_scene(network_data, ax, time_index):
+    # draw Earth sphere
+    u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+    phi = network_data['timestamp'][time_index] / 1e3 * EARTH_ROTATION
+    x = EARTH_RADIUS * np.cos(u + phi) * np.sin(v)
+    y = EARTH_RADIUS * np.sin(u + phi) * np.sin(v)
+    z = EARTH_RADIUS * np.cos(v)
+    ax.plot_wireframe(x, y, z, color="g")
+
+    # Plot vertices
+    point_size = 100
+    for sta_pos in network_data['positions'].values():
+        pos_vec = sta_pos[time_index, :]
+        color = 'b' if np.linalg.norm(pos_vec) > EARTH_RADIUS + MIN_SAT_ALT else 'r'
+        ax.scatter(*pos_vec, color=color, s=point_size)
+    # plot links
+    n_stations = len(network_data['positions'].keys())
+    for i in range(n_stations):
+        for j in range(i, n_stations):
+
+            if network_data['links'][time_index, i, j]:
+                src_pos = network_data['positions'][i][time_index, :]
+                dst_pos = network_data['positions'][j][time_index, :]
+                ax.plot(
+                    [src_pos[0], dst_pos[0]],
+                    [src_pos[1], dst_pos[1]],
+                    [src_pos[2], dst_pos[2]],
+                    color='b'
+                )
+
+
+def draw_satellites(connected_components):
+    from mpl_toolkits.mplot3d import axes3d, Axes3D
+    for i in range(14000):
+        limits = EARTH_RADIUS + 1e6
+        fig = plt.figure(figsize=(20,20))
+        ax = Axes3D(fig)
+        ax.set_xlim3d(-limits, limits)
+        ax.set_ylim3d(-limits, limits)
+        ax.set_zlim3d(-limits, limits)
+        ax.set_aspect("equal")
+        plot_scene(connected_components, ax, i)
+        plt.savefig('data/frames/frame_%05d.png' % i, bbox_inches='tight', dpi=100)
+        plt.clf()
+        plt.close(fig)
+
 
 if __name__ == '__main__':
     import os
@@ -226,11 +278,3 @@ if __name__ == '__main__':
     # Note, that all spaces and headers are removed before loading the data
     data_root = 'data'
     data = load_data(os.path.join(data_root, 'nodes.csv'), os.path.join(data_root, 'links.csv'))
-
-    connected_components = []
-    n_steps = len(data['timestamp']) - 1
-    for i in range(n_steps):
-        adjacency = data['links'][i]
-        laplacian = np.diag(np.sum(adjacency, axis=0)) - adjacency
-        eigen_vals, _ = np.linalg.eig(laplacian)
-        connected_components += [np.sum(eigen_vals <= np.finfo(np.float32).eps)]
