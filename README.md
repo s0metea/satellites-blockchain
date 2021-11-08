@@ -1,5 +1,5 @@
 # satellites-blockchain
-    Note! Linux is only supported.
+    Note! The project is unfinished, some parts of it may be broken and not working at all.
 
 
 ## Network topology
